@@ -78,6 +78,7 @@ const PCT = {
   yoy:  { lab: 'Y/Y',      sub: '% Change Y/Y',                    unit: '%', ref: 2 },
   mom:  { lab: 'M/M',      sub: '% Change M/M, SA',                unit: '%', bar: 1 },
   ann3: { lab: '3M ann.',  sub: '% Change, 3-Mo. Annualized, SA',  unit: '%', ref: 2 },
+  ann6: { lab: '6M ann.',  sub: '% Change, 6-Mo. Annualized, SA',  unit: '%', ref: 2 },
   lvl:  { lab: KIND === 'price' ? 'Index' : 'Level', sub: K.base,  unit: '' }
 };
 const MEAS = KIND === 'nfp' ? {
@@ -85,13 +86,13 @@ const MEAS = KIND === 'nfp' ? {
   dk3:  { lab: '3M Avg',   sub: '3-Mo. Avg. Change, Thous., SA',   bar: 1, add: 1 },
   d12:  { lab: '12M Chg',  sub: '12-Mo. Change, Thous.',           add: 1 },
   yoy:  PCT.yoy, lvl: PCT.lvl
-} : KIND === 'retail' ? { mom: PCT.mom, yoy: PCT.yoy, ann3: PCT.ann3, lvl: PCT.lvl } : PCT;
+} : KIND === 'retail' ? { mom: PCT.mom, yoy: PCT.yoy, ann3: PCT.ann3, ann6: PCT.ann6, lvl: PCT.lvl } : PCT;
 const STK_MS = KIND === 'nfp' ? ['dk', 'dk3', 'd12'] : KIND === 'retail' ? ['mom', 'yoy'] : ['yoy', 'mom'];
-const LAG = { yoy: 12, d12: 12, mom: 1, dk: 1, ann3: 3, dk3: 3 };
+const LAG = { yoy: 12, d12: 12, mom: 1, dk: 1, ann3: 3, ann6: 6, dk3: 3 };
 // subtitle, bar style and number format depend on the measure and on the first series' unit
 function subFor(m, u) {
   if (m === 'lvl') return { '%': '%, SA', k: 'Thous., SA', hrs: 'Hours, SA' }[u] || (KIND === 'nfp' ? '$, SA' : K.base);
-  if (u === '%') return { mom: 'Change, % Pts', dk: 'Change, % Pts', ann3: '3-Mo. Change, % Pts', dk3: '3-Mo. Avg. Change, % Pts', yoy: '12-Mo. Change, % Pts', d12: '12-Mo. Change, % Pts' }[m];
+  if (u === '%') return { mom: 'Change, % Pts', dk: 'Change, % Pts', ann3: '3-Mo. Change, % Pts', ann6: '6-Mo. Change, % Pts', dk3: '3-Mo. Avg. Change, % Pts', yoy: '12-Mo. Change, % Pts', d12: '12-Mo. Change, % Pts' }[m];
   if (MEAS[m] && MEAS[m].add && u !== 'k') return PCT[{ dk: 'mom', dk3: 'ann3', d12: 'yoy' }[m]].sub;
   return (MEAS[m] || PCT[m]).sub;
 }
@@ -111,7 +112,7 @@ function val(i, m) {
   const pm = { dk: 'mom', dk3: 'ann3', d12: 'yoy' }[m] || m;
   const v = m === 'lvl' ? base.slice() : base.map((x, t) => (t >= lag && x != null && base[t - lag] != null)
     ? (diff ? (x - base[t - lag]) / (m === 'dk3' ? 3 : 1)
-      : pm === 'ann3' ? (Math.pow(x / base[t - lag], 4) - 1) * 100 : x / base[t - lag] * 100 - 100) : null);
+      : pm === 'ann3' || pm === 'ann6' ? (Math.pow(x / base[t - lag], 12 / lag) - 1) * 100 : x / base[t - lag] * 100 - 100) : null);
   return cache[k] = { v, nsa: m !== 'yoy' && nsaOnly };
 }
 const Y = n => val(IDX[n], 'yoy').v, MM = n => val(IDX[n], 'mom').v;
@@ -122,6 +123,15 @@ const nm = i => SHORT[IT[i].n] || IT[i].n;
 const parentOf = i => { if (IT[i].a) return IDX[K.top]; for (let j = i - 1; j >= 0; j--) if (!IT[j].a && IT[j].d < IT[i].d) return j; return null; };
 const childrenOf = i => { const out = []; for (let j = i + 1; j < IT.length && !IT[j].a && IT[j].d > IT[i].d; j++) if (IT[j].d === IT[i].d + 1) out.push(j); return out; };
 const weightedKids = i => childrenOf(i).filter(k => !IT[k].p);
+// The core aggregate has no children in the item tree. For the stacked chart, split core into core goods and
+// core services, and core services into housing (shelter for CPI) and supercore, which is taken as the remainder.
+const VK = {}, VPAR = {}, REST = IDX[K.sc];
+if (KIND === 'price' && K.sc && [K.core, K.goods, K.svc, K.ex, K.sc].every(n => IDX[n] != null)) {
+  VK[IDX[K.core]] = [IDX[K.goods], IDX[K.svc]]; VK[IDX[K.svc]] = [IDX[K.ex], REST];
+  VPAR[IDX[K.goods]] = VPAR[IDX[K.svc]] = IDX[K.core]; VPAR[REST] = IDX[K.svc];
+}
+const stackKids = i => VK[i] || (IT[i].a ? [] : weightedKids(i));
+const upOf = i => VPAR[i] ?? (IT[i].a ? (i === IDX[K.top] ? null : IDX[K.top]) : parentOf(i));
 
 /* ---------- interactive chart: Haver figure + quiet toolbar ---------- */
 const COLS = ['--c1', '--c2', '--c3', '--c4'];
@@ -265,7 +275,7 @@ if (KIND !== 'nfp') (function drawOverview() {
 })();
 const trendY = (v, p) => Math.abs(v - p) < 0.3 ? '持平' : v > p ? '走高' : '走低';
 if (KIND === 'price') document.getElementById('p1').innerHTML = `
-<p>美國 ${mzh(lm)}${K.zh}季調後${chg(mA)}，前月為 ${f1(MM(A)[L - 1])}%，再前月為 ${f1(MM(A)[L - 2])}%。年增率由 ${f1(Y(A)[L - 1])}% ${yA > Y(A)[L - 1] ? '升至' : yA < Y(A)[L - 1] ? '降至' : '持平於'} ${f1(yA)}%${K.ref ? '，聯準會目標為 2%' : ''}。${K.coreZh}${chg(mC)}，年增 ${f1(yC)}%；核心年增率在過去一年大致${trendY(yC, Y(C)[L - 12])}，${yC < yA ? '總體高於核心，差距主要來自能源與食品。' : '總體低於核心，能源與食品壓低了總體。'}</p>
+<p>美國 ${mzh(lm)}${K.zh}季調後${chg(mA)}，前月為 ${f1(MM(A)[L - 1])}%，再前月為 ${f1(MM(A)[L - 2])}%。年增率由 ${f1(Y(A)[L - 1])}% ${yA > Y(A)[L - 1] ? '升至' : yA < Y(A)[L - 1] ? '降至' : '持平於'} ${f1(yA)}%${K.ref ? '，聯準會目標為 2%' : ''}。${K.coreZh}${chg(mC)}，年增 ${f1(yC)}%；核心 3 個月年化 ${f1(ann(IDX[C], 3))}%、6 個月年化 ${f1(ann(IDX[C], 6))}%（前月 6 個月年化 ${f1(val(IDX[C], 'ann6').v[L - 1])}%），${ann(IDX[C], 6) > yC + 0.2 ? '近半年的速度快於過去一年，通膨有再升溫跡象' : ann(IDX[C], 6) < yC - 0.2 ? '近半年的速度慢於過去一年，通膨持續降溫' : '近半年的速度與過去一年相近'}；核心年增率在過去一年大致${trendY(yC, Y(C)[L - 12])}，${yC < yA ? '總體高於核心，差距主要來自能源與食品。' : '總體低於核心，能源與食品壓低了總體。'}</p>
 <p>能源價格${chg(MM(E)[L])}，年增 ${f1(Y(E)[L])}%。食品價格${chg(MM(F)[L])}，年增 ${f1(Y(F)[L])}%。</p>`;
 if (KIND === 'price') document.getElementById('p2').innerHTML = `
 <p>核心項目中，${nm(IDX[SV])}月增 ${f1(MM(SV)[L])}%，年增 ${f1(Y(SV)[L])}%；其中${K.exZh}${chg(MM(SH)[L])}，年增 ${f1(Y(SH)[L])}%，過去一年${trendY(Y(SH)[L], Y(SH)[L - 12])}。${nm(IDX[GD])}月增 ${sg(MM(GD)[L])}%，年增 ${f1(Y(GD)[L])}%。</p>`;
@@ -389,19 +399,21 @@ document.getElementById('tbl').addEventListener('click', ev => {
 // which is how relative importance drifts between basket updates. Contributions are approximate.
 const wAt = (i, t) => { if (HASWH && D.wh[i]) return D.wh[i][t]; const p = has(D.nsa[i]) ? D.nsa[i] : D.sa[i]; return IT[i].w != null && p[t] != null && p[L] != null ? IT[i].w * p[t] / p[L] : null; };
 function contrib(node, m) {
-  const kids = weightedKids(node), lag = LAG[m];
+  const kids = stackKids(node), lag = LAG[m];
   const tot = val(node, m).v;
   const cats = kids.map(k => {
     const ch = val(k, m).v;
     if (MEAS[m].add) return { i: k, v: ch };
     return { i: k, v: tot.map((_, t) => { if (t < lag || ch[t] == null) return null; const wk = wAt(k, t - lag), wp = wAt(node, t - lag); return wk == null || !wp ? null : wk / wp * ch[t]; }) };
   });
+  const rest = VK[node] && cats.find(c => c.i === REST);
+  if (rest) rest.v = tot.map((x, t) => { if (x == null) return null; let s = 0; for (const c of cats) if (c !== rest) { if (c.v[t] == null) return null; s += c.v[t]; } return x - s; });
   const other = tot.map((x, t) => { if (x == null) return null; let s = 0; for (const c of cats) s += c.v[t] || 0; return x - s; });
   return { tot, cats, other };
 }
 const STK = Object.assign({ node: IDX[A], m: STK_MS[0], r: KIND === 'price' ? '5Y' : '2Y', hl: null }, store.get('stk') || {});
 if (!STK_MS.includes(STK.m)) STK.m = STK_MS[0];
-if (!IT[STK.node] || !weightedKids(STK.node).length) STK.node = IDX[A];
+if (!IT[STK.node] || !stackKids(STK.node).length) STK.node = IDX[A];
 const KC = i => `--k${i % 10}`;
 function drawStack() {
   const el = document.getElementById('stk');
@@ -454,14 +466,14 @@ function drawStack() {
   g += `<line class="xh" y1="${y0}" y2="${y1}" stroke="${css('--axis')}" stroke-width=".6" visibility="hidden"/>`;
   el.innerHTML = `<div class="plot"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(title)}">${g}</svg><div class="tip"></div></div><div class="tb"></div>`;
   // toolbar: breadcrumb, measure, range, legend
-  const path = []; for (let i = STK.node; i != null; i = IT[i].a ? (i === IDX[A] ? null : IDX[A]) : parentOf(i)) path.unshift(i);
+  const path = []; for (let i = STK.node; i != null; i = upOf(i)) path.unshift(i);
   const last = segs.map(sg_ => sg_.v[L]);
   el.querySelector('.tb').innerHTML =
     `<span class="crumb">${path.map((i, k) => k === path.length - 1 ? `<b>${esc(nm(i))}</b>` : `<button type="button" data-go="${i}">${esc(nm(i))}</button> ›`).join(' ')}</span>` +
     `<span class="seg" role="group" aria-label="Measure">${STK_MS.map(k => `<button type="button" data-m="${k}" aria-pressed="${STK.m === k}">${MEAS[k].lab}</button>`).join('')}</span>` +
     `<span class="seg" role="group" aria-label="Range">${RANGE_KEYS.map(k => `<button type="button" data-r="${k}" aria-pressed="${STK.r === k}">${k}</button>`).join('')}</span>` +
     `<span class="klg"><button type="button" disabled style="cursor:default"><i class="ln"></i><span>${esc(nm(STK.node))}</span><em>${MEAS[STK.m].add ? fk(tot[L]) : f1(tot[L])}</em></button>` +
-    segs.map((sg_, k) => `<button type="button" data-k="${sg_.i}" class="${STK.hl === sg_.i ? 'on' : ''}" ${sg_.i < 0 ? 'disabled style="cursor:default"' : ''} title="${sg_.i >= 0 && weightedKids(sg_.i).length ? '再往下拆' : ''}"><i style="background:${css(sg_.c)}"></i><span>${esc(sg_.name)}</span><em>${last[k] == null ? 'n.a.' : (last[k] >= 0 ? '+' : '') + (MEAS[STK.m].add ? Math.round(last[k]).toLocaleString('en-US') : (Math.abs(last[k]) < 0.005 ? 0 : last[k]).toFixed(2))}</em>${sg_.i >= 0 && weightedKids(sg_.i).length ? '<span class="dn">▸</span>' : ''}</button>`).join('') + '</span>';
+    segs.map((sg_, k) => `<button type="button" data-k="${sg_.i}" class="${STK.hl === sg_.i ? 'on' : ''}" ${sg_.i < 0 ? 'disabled style="cursor:default"' : ''} title="${sg_.i >= 0 && stackKids(sg_.i).length ? '再往下拆' : ''}"><i style="background:${css(sg_.c)}"></i><span>${esc(sg_.name)}</span><em>${last[k] == null ? 'n.a.' : (last[k] >= 0 ? '+' : '') + (MEAS[STK.m].add ? Math.round(last[k]).toLocaleString('en-US') : (Math.abs(last[k]) < 0.005 ? 0 : last[k]).toFixed(2))}</em>${sg_.i >= 0 && stackKids(sg_.i).length ? '<span class="dn">▸</span>' : ''}</button>`).join('') + '</span>' + quickRow();
   // hover
   const svg = el.querySelector('svg'), tip = el.querySelector('.tip'), xl = el.querySelector('.xh');
   const move = ev => {
@@ -483,16 +495,24 @@ function drawStack() {
   svg.addEventListener('touchstart', move, { passive: true }); svg.addEventListener('touchmove', move, { passive: true });
   store.set('stk', { node: STK.node, m: STK.m, r: STK.r });
 }
+// quick view: the headline aggregates with their latest M/M and Y/Y; a click drills the chart there
+const QV = (Object.keys(VK).length ? [K.top, K.core, K.goods, K.svc, K.ex, K.sc] : []).map(n => IDX[n]).filter(i => i != null);
+function quickRow() {
+  if (!QV.length) return '';
+  const on = i => STK.node === i || (STK.hl === i && !stackKids(i).length);
+  return `<span class="qv" role="group" aria-label="Quick view"><span class="qvl">Quick view <em>M/M · Y/Y, ${mlab(M[L])}</em></span>` + QV.map(i =>
+    `<button type="button" data-q="${i}" aria-pressed="${on(i)}"><span>${esc(nm(i))}</span><em>${f1(val(i, 'mom').v[L])} · ${f1(val(i, 'yoy').v[L])}</em></button>`).join('') + '</span>';
+}
 // select an item from anywhere: drill the stack, sync the table and the line chart
 function selectItem(i, scrollTo) {
-  const kids = IT[i].a ? [] : weightedKids(i);
+  const kids = stackKids(i);
   if (kids.length) { STK.node = i; STK.hl = null; }
-  else { const p = parentOf(i); if (p != null && weightedKids(p).includes(i)) STK.node = p; STK.hl = i; }
+  else { const p = upOf(i); if (p != null && stackKids(p).includes(i)) STK.node = p; STK.hl = i; }
   // open the table path down to the item
   for (let j = IT[i].a ? null : parentOf(i); j != null; j = parentOf(j)) open.add(j);
   if (kids.length) open.add(i);
   selI = i;
-  const p = parentOf(i), c = CH.ch5;
+  const p = upOf(i), c = CH.ch5;
   if (c) { c.st.ids = [{ i, ax: 'L' }]; if (p != null && p !== i) c.st.ids.push({ i: p, ax: 'L' }); c.save(); }
   drawStack(); drawTable();
   if (scrollTo) document.getElementById(scrollTo).scrollIntoView({ behavior: 'smooth', block: scrollTo === 'compo' ? 'start' : 'nearest' });
@@ -503,6 +523,7 @@ document.getElementById('stk').addEventListener('click', ev => {
   const b = ev.target.closest('button'); if (!b || b.disabled) return;
   if (b.dataset.go) selectItem(+b.dataset.go);
   else if (b.dataset.k) selectItem(+b.dataset.k);
+  else if (b.dataset.q) selectItem(+b.dataset.q);
   else if (b.dataset.m) { STK.m = b.dataset.m; drawStack(); drawTable(); }
   else if (b.dataset.r) { STK.r = b.dataset.r; drawStack(); drawTable(); }
 });
@@ -514,11 +535,13 @@ if (D.disp) (function breadth() {
   const BM = P.y12.map((_, k) => { const y = +P.start.slice(0, 4) + Math.floor((+P.start.slice(5) - 1 + k) / 12), m = (+P.start.slice(5) - 1 + k) % 12 + 1; return `${y}-${String(m).padStart(2, '0')}`; });
   const BL = BM.length - 1, last = P.comps.length, thr = P.thr;
   const y12 = P.y12[BL], a6 = P.a6[BL];
+  const vsPrev = (v, p) => { if (p == null) return ''; const d = Math.round(v) - Math.round(p);
+    return `（${mzh(BM[BL - 1])}為 ${p.toFixed(0)}%，${d === 0 ? '持平' : (d > 0 ? '增加 ' : '減少 ') + Math.abs(d) + ' 個百分點'}）`; };
   const peakA6 = Math.max(...P.a6), peakA6m = BM[P.a6.indexOf(peakA6)];
   const cmp = (v, pre) => v > pre + 3 ? '仍明顯高於' : v < pre - 3 ? '已低於' : '接近';
   document.getElementById('brdTxt').innerHTML =
-    `過去 12 個月，PCE 籃子 <b>${last}</b> 個細項中有 <b>${y12.toFixed(0)}%</b> 漲幅超過 ${thr}%，低於疫後高點 ${P.peak.v.toFixed(0)}%（${mzh(P.peak.m)}），但${cmp(y12, P.pre_y12)}疫情前二十年（1995–2019）的平均 ${P.pre_y12.toFixed(0)}%。` +
-    `只看過去 6 個月（年化），比例為 <b>${a6.toFixed(0)}%</b>，疫後高點 ${peakA6.toFixed(0)}%（${mzh(peakA6m)}），疫前平均 ${P.pre_a6.toFixed(0)}%，結論${Math.sign(y12 - P.pre_y12) === Math.sign(a6 - P.pre_a6) ? '相同' : '不同'}。資料至 ${mzh(BM[BL])}。`;
+    `過去 12 個月，PCE 籃子 <b>${last}</b> 個細項中有 <b>${y12.toFixed(0)}%</b> 漲幅超過 ${thr}%${vsPrev(y12, P.y12[BL - 1])}，低於疫後高點 ${P.peak.v.toFixed(0)}%（${mzh(P.peak.m)}），但${cmp(y12, P.pre_y12)}疫情前二十年（1995–2019）的平均 ${P.pre_y12.toFixed(0)}%。` +
+    `只看過去 6 個月（年化），比例為 <b>${a6.toFixed(0)}%</b>${vsPrev(a6, P.a6[BL - 1])}，疫後高點 ${peakA6.toFixed(0)}%（${mzh(peakA6m)}），疫前平均 ${P.pre_a6.toFixed(0)}%，結論${Math.sign(y12 - P.pre_y12) === Math.sign(a6 - P.pre_a6) ? '相同' : '不同'}。資料至 ${mzh(BM[BL])}。`;
   // trend chart
   let br = store.get('brdR') || 'Max';
   const RK = ['5Y', '10Y', '20Y', 'Max'], RB = { '5Y': 60, '10Y': 120, '20Y': 240 };

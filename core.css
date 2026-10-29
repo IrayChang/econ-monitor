@@ -123,3 +123,13 @@ table.heat{font-size:11px}
 table.heat th.hc{font-weight:400;font-size:10px;color:var(--muted);text-align:center;padding:4px 2px;line-height:1.15}
 table.heat td.hx{text-align:center;padding:4px 2px;min-width:26px;color:var(--ink)}
 table.heat td:first-child{white-space:nowrap}
+/* quick view under the stacked chart: headline aggregates with latest M/M and Y/Y */
+.qv{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;flex:1 1 100%;border-top:1px dashed var(--grid);padding-top:6px}
+.qv .qvl{color:var(--muted);margin-right:2px}
+.qv .qvl em{font-style:normal;font-size:11px;margin-left:4px}
+.qv button{all:unset;cursor:pointer;display:inline-flex;align-items:baseline;gap:6px;border:1px solid var(--rule);border-radius:3px;padding:2px 8px;color:var(--ink)}
+.qv button em{font-style:normal;color:var(--muted);font-variant-numeric:tabular-nums}
+.qv button:hover{background:var(--hl);border-color:var(--frame)}
+.qv button[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:var(--paper)}
+.qv button[aria-pressed="true"] em{color:var(--paper);opacity:.85}
+.qv button:focus-visible{outline:2px solid var(--brand);outline-offset:1px}
