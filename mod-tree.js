@@ -12,6 +12,10 @@ const CFG = {
     top: 'Personal consumption expenditures', core: 'PCE excluding food and energy', food: 'Food and beverages purchased for off-premises consumption', energy: 'Energy goods and services',
     goods: 'PCE goods excluding food and energy', svc: 'PCE services excluding energy', ex: 'Housing', exZh: '住房（housing）',
     sc: 'PCE services excluding energy and housing (supercore)', coreZh: '排除食品與能源的核心 PCE', search: 'rent、airline、portfolio、hospital',
+    // tree items that add up to core goods and to supercore (weights check: 21.7 and 51.7)
+    coreKids: { 'PCE goods excluding food and energy': ['Durable goods', 'Clothing and footwear', 'Other nondurable goods'],
+      'PCE services excluding energy and housing (supercore)': ['Health care', 'Transportation services', 'Recreation services', 'Food services and accommodations',
+        'Financial services and insurance', 'Other services', 'Water supply and sanitation', 'Final consumption expenditures of nonprofit institutions serving households (NPISHs)'] },
     short: { 'Personal consumption expenditures': 'PCE', 'PCE excluding food and energy': 'Core PCE', 'Food and beverages purchased for off-premises consumption': 'Food (off-premises)',
       'Energy goods and services': 'Energy', 'PCE goods excluding food and energy': 'Core Goods', 'PCE services excluding energy': 'Services less Energy',
       'PCE services excluding energy and housing (supercore)': 'Services less Energy & Housing (supercore)',
@@ -129,6 +133,7 @@ const VK = {}, VPAR = {}, REST = IDX[K.sc];
 if (KIND === 'price' && K.sc && [K.core, K.goods, K.svc, K.ex, K.sc].every(n => IDX[n] != null)) {
   VK[IDX[K.core]] = [IDX[K.goods], IDX[K.svc]]; VK[IDX[K.svc]] = [IDX[K.ex], REST];
   VPAR[IDX[K.goods]] = VPAR[IDX[K.svc]] = IDX[K.core]; VPAR[REST] = IDX[K.svc];
+  for (const [p, ns] of Object.entries(K.coreKids || {})) { const ks = ns.map(n => IDX[n]); if (IDX[p] != null && ks.every(k => k != null)) VK[IDX[p]] = ks; }
 }
 const stackKids = i => VK[i] || (IT[i].a ? [] : weightedKids(i));
 const upOf = i => VPAR[i] ?? (IT[i].a ? (i === IDX[K.top] ? null : IDX[K.top]) : parentOf(i));
@@ -368,7 +373,7 @@ let TC = null;
 const open = new Set([IDX[A]]);
 let selI = null;
 function rowHtml(i, depth) {
-  const kids = IT[i].a ? [] : childrenOf(i), mm = val(i, 'mom');
+  const kids = VK[i] || (IT[i].a ? [] : childrenOf(i)), mm = val(i, 'mom');
   const cr = kids.length ? `<button type="button" class="cr" data-t="${i}" aria-expanded="${open.has(i)}" aria-label="${open.has(i) ? 'Collapse' : 'Expand'} ${esc(IT[i].n)}">${open.has(i) ? '▾' : '▸'}</button>` : '<span class="sp"></span>';
   let h = `<tr data-i="${i}" class="${selI === i ? 'sel' : ''}${IT[i].p ? ' prod' : ''}"><td style="padding-left:${6 + depth * 14}px">${cr}<button type="button" class="nm" data-p="${i}">${esc(nm(i) === IT[i].n ? IT[i].n : nm(i))}</button>${mm.nsa ? ' <span class="note">NSA</span>' : ''}</td>` +
     `<td>${IT[i].w != null ? IT[i].w.toFixed(1) : ''}</td>` +
@@ -383,6 +388,7 @@ function drawTable() {
   let h = `<thead><tr class="grp"><th>${K.long} (${KIND === 'nfp' ? 'thous.' : '% chg'})</th><th></th>${TC.map(g => `<th class="vl" colspan="${g.cols.length}">${esc(g.g)}</th>`).join('')}</tr>
 <tr><th></th><th>Wt.</th>${TC.map(g => g.cols.map((c, j) => `<th${j ? '' : ' class="vl"'}>${esc(c.lab)}</th>`).join('')).join('')}</tr></thead><tbody>`;
   h += rowHtml(IDX[A], 0);
+  if (VK[IDX[K.core]]) h += rowHtml(IDX[K.core], 0);
   if (IT.some(it => it.a && !it.x)) h += `<tr class="gh"><td colspan="${nc}"><button type="button" class="cr" data-agg aria-expanded="${AGG_OPEN.v}">${AGG_OPEN.v ? '▾' : '▸'}</button>Special aggregates</td></tr>`;
   if (AGG_OPEN.v) IT.forEach((it, i) => { if (it.a && !it.x) h += rowHtml(i, 1); });
   document.getElementById('tbl').innerHTML = h + '</tbody>';
@@ -397,7 +403,8 @@ document.getElementById('tbl').addEventListener('click', ev => {
 /* ---------- contributions ---------- */
 // Weights: latest BLS relative importance, rolled back with each item's relative price (NSA),
 // which is how relative importance drifts between basket updates. Contributions are approximate.
-const wAt = (i, t) => { if (HASWH && D.wh[i]) return D.wh[i][t]; const p = has(D.nsa[i]) ? D.nsa[i] : D.sa[i]; return IT[i].w != null && p[t] != null && p[L] != null ? IT[i].w * p[t] / p[L] : null; };
+const wAt = (i, t) => { if (HASWH && D.wh[i]) return D.wh[i][t];
+  if (HASWH && i === REST && VPAR[REST] != null) { const a = D.wh[IDX[K.svc]], b = D.wh[IDX[K.ex]]; if (a && b && a[t] != null && b[t] != null) return a[t] - b[t]; } const p = has(D.nsa[i]) ? D.nsa[i] : D.sa[i]; return IT[i].w != null && p[t] != null && p[L] != null ? IT[i].w * p[t] / p[L] : null; };
 function contrib(node, m) {
   const kids = stackKids(node), lag = LAG[m];
   const tot = val(node, m).v;
