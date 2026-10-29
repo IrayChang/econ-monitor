@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ECAN Economic Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="core.css">
+<link rel="stylesheet" href="ov.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="demo" id="demo"></div>
+  <nav class="dsnav" id="nav" aria-label="Dataset"></nav>
+  <main id="app"></main>
+</div>
+<template id="tpl-tree">
+  <div class="meta"><b>USA</b> | <span id="dt"></span></div>
+  <h1 id="hd"></h1>
+
+  <h2 class="sec">Overview</h2>
+  <p class="how" id="ovHow">動能＝3 個月年化相對年增：高出 0.3 個百分點以上為加速（紅），低 0.3 以上為降溫（藍）。點列可在 Components 拆開該項目。</p>
+  <div class="tblw"><table id="ovt"></table></div>
+  <div class="tblw" id="ovt2w" hidden><table id="ovt2"></table></div>
+
+  <section id="brd" hidden>
+    <h2 class="sec">Breadth</h2>
+    <p class="how">把 PCE 拆成約 220 個細項，看有多少比例的漲幅超過 3%：比例越高，代表通膨越廣泛、越不是少數項目造成。這是聯準會官員判斷「底層通膨」的方法之一。</p>
+    <p class="lede" id="brdTxt"></p>
+    <div class="charts">
+      <div class="hv" id="brdTs"></div>
+      <div class="hv" id="brdHist"></div>
+    </div>
+    <div class="blist" id="brdList" hidden></div>
+  </section>
+
+  <h2 class="sec" id="compo">Components</h2>
+  <p class="how">點表格裡的項目名稱，上方的堆疊圖會拆開它的下一層，下方的線圖畫出它與上一層；點堆疊圖的色塊或圖例可再往下拆。表格的欄位跟著堆疊圖的期間與衡量方式：3M、6M、YTD 顯示每月數字，2Y 以上顯示年度平均。共 <span id="nItems"></span> 個項目。</p>
+  <div class="hv" id="stk" style="margin:12px 0 12px"></div>
+  <div class="tblw"><table id="tbl"></table></div>
+  <div class="hv" id="ch5" style="margin:12px 0 10px"></div>
+
+  <h2 class="sec">Analysis</h2>
+  <div class="charts">
+    <div class="hv" id="ch1"></div>
+    <div class="hv" id="ch2"></div>
+  </div>
+
+  <div id="p1"></div>
+
+  <div class="charts">
+    <div class="hv" id="ch3"></div>
+    <div class="hv" id="ch4"></div>
+  </div>
+
+  <div id="p2"></div>
+  <p class="note" id="note"></p>
+
+
+  <section class="cmp">
+    <h2>怎麼把兩種風格混在一起</h2>
+    <ul>
+      <li><b>預設是出版圖</b>：每張圖打開時就是作者選好的觀點（標題、單位、期間都固定好），不碰任何按鈕也能讀。</li>
+      <li><b>互動收在圖下方的工具列</b>：衡量方式（Y/Y、M/M、3M 年化、指數）、期間（3M、6M、YTD、2Y、3Y、5Y、Max）、項目（＋Item 搜尋全部項目，最多 4 條線，L/R 切換左右軸）。標題與單位副標會跟著改，所以截圖下來仍是一張完整的出版圖。</li>
+      <li><b>Reset</b> 回到作者的預設觀點；你的調整會記在這個瀏覽器裡。</li>
+      <li><b>堆疊圖與表格連動</b>：點表格的項目名稱、堆疊圖的色塊或圖例，三者同步：堆疊圖拆開該項目的下一層（各細項對它的貢獻，單位為百分點，黑線為該項目本身），表格展開到同一層並標示，下方線圖畫出該項目與上一層。麵包屑可往上回到任何一層。</li>
+      <li><b>表格當作導覽</b>：Haver 文末的固定表格變成可展開的樹，從總體一路點到細項，點名稱就畫出來。</li>
+</template>
+<template id="tpl-gdp">
+  <div class="meta"><b>USA</b> | <span id="dt"></span></div>
+  <h1 id="hd"></h1>
+
+  <h2 class="sec">Overview</h2>
+  <p class="how">季增年率（SAAR）：季增率連乘四季。核心 GDP＝對國內民間買家的最終銷售（消費＋民間固定投資），排除波動大的存貨、淨出口與政府支出。</p>
+  <div class="tblw"><table id="govt"></table></div>
+
+  <h2 class="sec" id="gcompo">Contributions</h2>
+  <p class="how">各項對實質 GDP 成長的貢獻（百分點，BEA 官方數字），加總等於 GDP 成長。點色塊、圖例或表格的項目名稱往下拆；虛線框是本季的 GDPNow 即時預測。表格欄位跟著圖的期間：4Q、8Q 顯示每季，3Y 以上顯示每年各季的平均。</p>
+  <div class="hv" id="gstk" style="margin:12px 0 12px"></div>
+  <div class="tblw"><table id="gtbl"></table></div>
+
+  <h2 class="sec">Analysis</h2>
+  <div id="gp1"></div>
+  <div class="charts">
+    <div class="hv" id="gch1"></div>
+    <div class="hv" id="gch2"></div>
+  </div>
+  <div class="charts">
+    <div class="hv" id="gch3"></div>
+    <div class="hv" id="gch4"></div>
+  </div>
+
+  <h2 class="sec">Revisions</h2>
+  <p class="how">BEA 每季發布三次估計（初估、二估、三估），之後年度修正仍會改動；市場預期取自 investing.com 經濟日曆。</p>
+  <div class="tblw"><table id="grev"></table></div>
+  <p class="note">資料來源：美國經濟分析局（BEA）國民所得帳，經 FRED；即時預測為亞特蘭大聯準銀行 GDPNow。2025 年第 3 季因政府停擺延後，只發布兩次估計。</p>
+</template>
+<template id="tpl-survey">
+ <div id="survey">
+  <div class="meta"><b>USA</b> | <span id="dt"></span></div>
+  <h1 id="hd"></h1>
+
+  <h2 class="sec">Overview</h2>
+  <p class="how">擴散指數以 50 為分界：高於 50 代表回覆「增加」的企業多於「減少」。點分項名稱可在下方大圖畫出。</p>
+  <div class="tblw"><table id="sov"></table></div>
+  <div class="tblw" id="sov2w" hidden><table id="sov2"></table></div>
+
+  <section id="sheatSec">
+    <h2 class="sec">Components heatmap</h2>
+    <p class="how">各分項不能相加，所以用熱度圖看「哪些分項、從什麼時候開始」轉強或轉弱，取代堆疊圖。</p>
+    <div class="tb heattb" id="shtb"></div>
+    <div class="tblw"><table id="sheat" class="heat"></table></div>
+  </section>
+  <div class="hv" id="sch5" style="margin:12px 0 10px"></div>
+
+  <h2 class="sec">Analysis</h2>
+  <div id="sp1"></div>
+  <div class="charts">
+    <div class="hv" id="sch1"></div>
+    <div class="hv" id="sch2"></div>
+  </div>
+  <div class="charts">
+    <div class="hv" id="sch3"></div>
+    <div class="hv" id="sch4"></div>
+  </div>
+  <p class="note" id="snote"></p>
+ </div>
+</template>
+<template id="tpl-claims">
+  <div class="meta"><b>USA</b> | <span id="dt"></span></div>
+  <h1 id="hd"></h1>
+
+  <h2 class="sec">Overview</h2>
+  <div class="tblw"><table id="cov"></table></div>
+  <div id="cp1"></div>
+  <div class="charts">
+    <div class="hv" id="cch1"></div>
+    <div class="hv" id="cch2"></div>
+  </div>
+  <div class="charts">
+    <div class="hv" id="cch3"></div>
+    <div class="hv" id="cch4"></div>
+  </div>
+
+  <h2 class="sec">Monthly companions</h2>
+  <p class="how">每月的失業原因（家計調查）與 ADP 民間就業、薪資，補充週資料看不到的面向。</p>
+  <div class="tblw"><table id="cov2"></table></div>
+  <div class="charts">
+    <div class="hv" id="cch5"></div>
+    <div class="hv" id="cch6"></div>
+  </div>
+  <p class="note">初領與續領失業金來自勞動部每週四發布的報告（續領晚一週）；失業原因來自 BLS 家計調查；ADP 週資料與薪資來自 ADP Research。</p>
+</template>
+<template id="tpl-ov">
+  <div class="meta"><b>USA</b> | <span id="ovdt"></span></div>
+  <h1>Overview</h1>
+  <div id="ovapp">
+  <div class="toolbar"><span class="status" id="status"></span></div><div class="tip" id="tip" hidden></div>
+<div id="appOv">
+<div class="ovtop">
+  <section class="summary" aria-labelledby="oSumT">
+    <div class="ph"><h2 id="oSumT">Trend summary</h2><span class="hint">看方向，不看單月：依各指標的趨勢線自動產生</span></div>
+    <ul id="oSumList"></ul>
+  </section>
+  <section class="panel">
+    <div class="ph"><h2>Calendar</h2><span class="hint" id="ocHint"></span></div>
+    <div class="tw" id="ocTbl"></div>
+  </section>
+</div>
+
+<section class="panel wide">
+  <div class="ph">
+    <h2>Dashboard</h2>
+    <span class="hint">點選列前往該分頁 · 趨勢＝趨勢線近 6 個月（GDP 為 2 季）的變化</span>
+  </div>
+  <div class="tw" style="max-height:none"><table id="oTbl"></table></div>
+  <div class="legend"><span>趨勢線：通膨、成長率用年增；PMI 與就業流量用 6 個月平均；失業率用 3 個月平均</span><span>近期 vs 趨勢：最新單期（或 3 個月年化）相對趨勢線的位置，代表是否正在轉折</span><span>顏色依全站規則：紅＝不利方向</span></div>
+</section>
+
+<section class="panel wide">
+  <div class="ph">
+    <h2>Trends</h2>
+    <span class="hint">細線＝單期數值（雜訊大），粗線＝趨勢線；虛線＝目標或基準</span>
+  </div>
+  <div id="oGrid"></div>
+</section>
+
+<footer class="notes">
+  <div><b>用法</b> 這一頁不判斷政策，只呈現各面向「往哪裡走」。每張小圖的粗線是趨勢線，細線是每月（或每季）數字；單月偏離趨勢常會被下個月抵銷，連續數月朝同一方向才算趨勢改變。點圖或列可進入該資料的分頁看細節。</div>
+  <div><b>趨勢判斷</b> 趨勢線近 6 個月（GDP 為近 2 季）的變化超過各指標的門檻，才標為上升或下降，否則為持平。門檻：通膨 0.2 個百分點、PMI 1 點、非農就業 25k、失業率 0.2 個百分點、初領 10k、時薪 0.2 個百分點、GDP 0.5 個百分點、零售 1 個百分點。</div>
+  <div><b>資料</b> 全部取自本頁各分頁的資料集，更新時間以各分頁為準；行事曆中已過公布日但頁面尚未更新的項目會標示「待更新」。PPI 公布日取自第三方行事曆，尚未在 BLS 網站確認。</div>
+</footer>
+</div>
+
+  </div>
+</template>
+<!--MORE-TEMPLATES-->
+<script src="core.js"></script>
+</body>
+</html>
