@@ -5,6 +5,9 @@ const CFG = {
     top: 'All items', core: 'All items less food and energy', food: 'Food', energy: 'Energy',
     goods: 'Commodities less food and energy commodities', svc: 'Services less energy services', ex: 'Shelter', exZh: '住房（shelter）',
     sc: 'Services less shelter (supercore)', coreZh: '排除食品與能源的核心 CPI', search: 'rent、airline、used cars',
+    // tree items that add up to supercore (core services less shelter); core goods already has its own items in the tree
+    coreKids: { 'Services less shelter (supercore)': ['Medical care services', 'Transportation services', 'Recreation services', 'Education and communication services',
+      'Other personal services', 'Water and sewer and trash collection services'] },   // household operations has almost no data; it stays in Other / residual
     short: { 'All items': 'Total', 'All items less food and energy': 'Excl. Food & Energy', 'Services less energy services': 'Services less Energy',
       'Commodities less food and energy commodities': 'Goods less Food & Energy', 'Gasoline (all types)': 'Gasoline', 'Services less shelter (supercore)': 'Services less Shelter (supercore)' },
     wNote: '權重為最新的相對重要性（%）；各月權重以相對價格回推，屬估算。', srcNote: 'CPI 資料由勞工統計局（BLS）每月發布。2025 年 10 月因政府停擺未發布。' },
@@ -388,7 +391,7 @@ function drawTable() {
   let h = `<thead><tr class="grp"><th>${K.long} (${KIND === 'nfp' ? 'thous.' : '% chg'})</th><th></th>${TC.map(g => `<th class="vl" colspan="${g.cols.length}">${esc(g.g)}</th>`).join('')}</tr>
 <tr><th></th><th>Wt.</th>${TC.map(g => g.cols.map((c, j) => `<th${j ? '' : ' class="vl"'}>${esc(c.lab)}</th>`).join('')).join('')}</tr></thead><tbody>`;
   h += rowHtml(IDX[A], 0);
-  if (VK[IDX[K.core]]) h += rowHtml(IDX[K.core], 0);
+  if (VK[IDX[K.core]] && IT[IDX[K.core]].a) h += rowHtml(IDX[K.core], 0);   // CPI's core is already in the tree
   if (IT.some(it => it.a && !it.x)) h += `<tr class="gh"><td colspan="${nc}"><button type="button" class="cr" data-agg aria-expanded="${AGG_OPEN.v}">${AGG_OPEN.v ? '▾' : '▸'}</button>Special aggregates</td></tr>`;
   if (AGG_OPEN.v) IT.forEach((it, i) => { if (it.a && !it.x) h += rowHtml(i, 1); });
   document.getElementById('tbl').innerHTML = h + '</tbody>';
