@@ -358,10 +358,10 @@ function avgChg(i, yr, upTo = 12) {
 function tableCols() {
   const m = STK.m, lbl = t => t === L || M[t].endsWith('-01') ? `${mlab(M[t])} '${M[t].slice(2, 4)}` : mlab(M[t]);
   const add = MEAS[m].add, other = add || m !== 'yoy' ? 'yoy' : 'mom', cf = add ? fk : f1;
-  const tail = { g: other === 'yoy' ? 'Y/Y %' : 'M/M %, SA', cols: [{ lab: lbl(L), f: i => val(i, other).v[L] }] };
+  const tail = { g: other === 'yoy' ? 'Y/Y %' : 'M/M %, SA', cols: [{ lab: lbl(L), f: i => val(i, other).v[L], hs: i => val(i, other).v }] };
   if (['3M', '6M', 'YTD'].includes(STK.r)) {
     const s = rangeStart(STK.r, 0), cols = [];
-    for (let t = L; t >= s; t--) cols.push({ lab: lbl(t), f: i => val(i, m).v[t], fmt: cf });
+    for (let t = L; t >= s; t--) cols.push({ lab: lbl(t), f: i => val(i, m).v[t], fmt: cf, hs: i => val(i, m).v });
     return [{ g: MEAS[m].lab + (add ? ', thous.' : ' %') + ` · ${STK.r === 'YTD' ? 'year to date' : 'last ' + cols.length + ' months'}`, cols }, tail];
   }
   const cy = +M[L].slice(0, 4), mo = +M[L].slice(5), firstY = +M[0].slice(0, 4) + 1;
@@ -370,17 +370,49 @@ function tableCols() {
   const cols = [{ lab: `${cy} YTD`, f: i => yf(i, cy, mo), fmt: cf }];
   for (let y = cy - 1; y >= Math.max(firstY, cy - n); y--) cols.push({ lab: String(y), f: i => yf(i, y, 12), fmt: cf });
   const first = add ? { lab: `Chg ${mlab(M[L])}`, f: i => val(i, 'dk').v[L], fmt: fk } : { lab: `M/M ${mlab(M[L])}`, f: i => val(i, 'mom').v[L] };
-  return [{ g: add ? 'Avg. monthly chg, thous.' : 'Annual avg. % chg', cols }, { g: 'Latest', cols: [first, { lab: `Y/Y ${mlab(M[L])}`, f: i => val(i, 'yoy').v[L] }] }];
+  first.hs = i => val(i, add ? 'dk' : 'mom').v;
+  return [{ g: add ? 'Avg. monthly chg, thous.' : 'Annual avg. % chg', cols, row: true }, { g: 'Latest', cols: [first, { lab: `Y/Y ${mlab(M[L])}`, f: i => val(i, 'yoy').v[L], hs: i => val(i, 'yoy').v }] }];
+}
+// Heatmap, Bloomberg ECAN style: each cell is shaded by how far it sits from that item's own
+// pre-pandemic norm (2016-2019 average of the same measure), in units of the item's typical
+// variability (robust spread over all months, so the 2020 swings do not wash everything out).
+// Columns without a history (annual averages) are scaled within the row instead.
+function zStats(arr) {
+  const x = arr.filter(v => v != null && isFinite(v)), base = arr.filter((v, t) => v != null && isFinite(v) && M[t] >= '2016-01' && M[t] <= '2019-12');
+  if (x.length < 24) return null;
+  const med = a => { const b = [...a].sort((p, q) => p - q), k = b.length >> 1; return b.length % 2 ? b[k] : (b[k - 1] + b[k]) / 2; };
+  const ref = base.length >= 24 ? base : x, mu = ref.reduce((p, q) => p + q, 0) / ref.length;
+  const m0 = med(x), sd = 1.4826 * med(x.map(v => Math.abs(v - m0)));
+  return sd > 1e-9 ? { mu, sd } : null;
+}
+function heatBg(z) {
+  if (z == null || !isFinite(z)) return '';
+  const a = Math.min(1, Math.abs(z) / 2.5);
+  if (a < 0.12) return '';
+  const hot = z > 0, col = UPGOOD ? (hot ? '--c3' : '--c2') : (hot ? '--c2' : '--c1');
+  return ` style="background:color-mix(in srgb, var(${col}) ${Math.round(a * 62)}%, var(--paper))"`;
+}
+function heatCells(i, g) {
+  const v = g.cols.map(c => c.f(i));
+  let z;
+  if (g.row) {
+    const x = v.filter(a => a != null), mu = x.reduce((a, b) => a + b, 0) / (x.length || 1), sd = Math.sqrt(x.reduce((a, b) => a + (b - mu) ** 2, 0) / (x.length || 1));
+    z = v.map(a => a == null || x.length < 3 || sd < 1e-9 ? null : (a - mu) / sd);
+  } else {
+    z = g.cols.map((c, j) => { if (v[j] == null || !c.hs) return null; const st = zStats(c.hs(i)); return st ? (v[j] - st.mu) / st.sd : null; });
+  }
+  return g.cols.map((c, j) => `<td class="hm${j ? '' : ' vl'}"${heatBg(z[j])}>${(c.fmt || f1)(v[j])}</td>`).join('');
 }
 let TC = null;
-const open = new Set([IDX[A]]);
+// opens like a Bloomberg ECAN table: headline, core, and core split into goods and services
+const open = new Set([IDX[A], ...(VK[IDX[K.core]] ? [IDX[K.core], IDX[K.svc]] : [])]);
 let selI = null;
 function rowHtml(i, depth) {
   const kids = VK[i] || (IT[i].a ? [] : childrenOf(i)), mm = val(i, 'mom');
   const cr = kids.length ? `<button type="button" class="cr" data-t="${i}" aria-expanded="${open.has(i)}" aria-label="${open.has(i) ? 'Collapse' : 'Expand'} ${esc(IT[i].n)}">${open.has(i) ? '▾' : '▸'}</button>` : '<span class="sp"></span>';
   let h = `<tr data-i="${i}" class="${selI === i ? 'sel' : ''}${IT[i].p ? ' prod' : ''}"><td style="padding-left:${6 + depth * 14}px">${cr}<button type="button" class="nm" data-p="${i}">${esc(nm(i) === IT[i].n ? IT[i].n : nm(i))}</button>${mm.nsa ? ' <span class="note">NSA</span>' : ''}</td>` +
     `<td>${IT[i].w != null ? IT[i].w.toFixed(1) : ''}</td>` +
-    TC.map(g => g.cols.map((c, j) => `<td${j ? '' : ' class="vl"'}>${(c.fmt || f1)(c.f(i))}</td>`).join('')).join('') + '</tr>';
+    TC.map(g => heatCells(i, g)).join('') + '</tr>';
   if (open.has(i)) for (const k of kids) h += rowHtml(k, depth + 1);
   return h;
 }
@@ -395,6 +427,8 @@ function drawTable() {
   if (IT.some(it => it.a && !it.x)) h += `<tr class="gh"><td colspan="${nc}"><button type="button" class="cr" data-agg aria-expanded="${AGG_OPEN.v}">${AGG_OPEN.v ? '▾' : '▸'}</button>Special aggregates</td></tr>`;
   if (AGG_OPEN.v) IT.forEach((it, i) => { if (it.a && !it.x) h += rowHtml(i, 1); });
   document.getElementById('tbl').innerHTML = h + '</tbody>';
+  const sw = c => `<i style="background:color-mix(in srgb, var(${c}) 55%, var(--paper))"></i>`, [lo, hi] = UPGOOD ? ['--c2', '--c3'] : ['--c1', '--c2'];
+  document.getElementById('heatLg').innerHTML = `${sw(lo)}${UPGOOD ? '弱於' : '低於'}疫情前常態 ${sw(hi)}${UPGOOD ? '強於' : '高於'}疫情前常態<span>顏色深淺＝與該項目自己 2016–2019 年同一衡量的平均相比，差距以該項目平常的波動幅度衡量（約 2.5 倍時為滿色）。年度平均欄位改為在同一列內比較。</span>`;
 }
 document.getElementById('tbl').addEventListener('click', ev => {
   const b = ev.target.closest('button'); if (!b) return;
