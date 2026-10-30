@@ -52,6 +52,8 @@ const CFG = {
 for (const k of ['cpi', 'pce', 'ppi']) Object.assign(CFG[k], { kind: 'price' });
 const K = CFG[DK], D = ALL[DK];
 const KIND = K.kind, UPGOOD = KIND !== 'price';
+// heatmap tone (shared helpers in core.js): prices shade terracotta/blue, activity green/terracotta
+const HTONE = UPGOOD ? 'good' : 'price';
 const M = D.months, N = M.length, L = N - 1, IT = D.items;
 const has = a => a != null && a.some(v => v != null);
 const HASWH = !!(D.wh && D.wh.some(x => x));
@@ -272,15 +274,17 @@ if (KIND !== 'nfp') (function drawOverview() {
 <tr><th></th><th>Wt.</th><th class="vl">${lb}</th><th>${mlab(M[L - 1])}</th><th class="vl">3M</th><th>6M</th><th class="vl">${lb}</th><th>${mlab(M[L - 1])}</th><th>${mlab(M[L - 12])} '${M[L - 12].slice(2, 4)}</th><th class="vl"></th><th class="vl"></th></tr></thead><tbody>`;
   for (const [n, pad] of OV) {
     const i = IDX[n], yy = val(i, 'yoy').v, a3 = ann(i, 3), d = a3 != null && yy[L] != null ? a3 - yy[L] : null;
-    const mo = momTag(d, MOM_T);
+    const mo = momTag(d, MOM_T), mm = val(i, 'mom').v, sM = heatStat(mm, M, L), sY = heatStat(yy, M, L);
+    const hz = (v, st, cls, b) => heatTd(b ? `<b>${f1(v)}</b>` : f1(v), heatZ(v, st), HTONE, cls);
     h += `<tr data-i="${i}"><td style="padding-left:${9 + pad * 14}px"><button type="button" class="nm" data-ov="${i}">${esc(nm(i))}</button></td><td>${IT[i].w != null ? IT[i].w.toFixed(1) : ''}</td>` +
-      `<td class="vl">${f1(val(i, 'mom').v[L])}</td><td>${f1(val(i, 'mom').v[L - 1])}</td><td class="vl">${f1(a3)}</td><td>${f1(ann(i, 6))}</td>` +
-      `<td class="vl"><b>${f1(yy[L])}</b></td><td>${f1(yy[L - 1])}</td><td>${f1(yy[L - 12])}</td><td class="vl" style="text-align:left">${mo}</td><td class="vl" style="padding:2px 9px">${spark(yy)}</td></tr>`;
+      hz(mm[L], sM, 'vl') + hz(mm[L - 1], sM) + hz(a3, heatStat(val(i, 'ann3').v, M, L), 'vl') + hz(ann(i, 6), heatStat(val(i, 'ann6').v, M, L)) +
+      hz(yy[L], sY, 'vl', 1) + hz(yy[L - 1], sY) + hz(yy[L - 12], sY) + `<td class="vl" style="text-align:left">${mo}</td><td class="vl" style="padding:2px 9px">${spark(yy)}</td></tr>`;
   }
   const el = document.getElementById('ovt');
   el.innerHTML = h + '</tbody>';
   el.addEventListener('click', ev => { const b = ev.target.closest('button[data-ov]'); if (b) selectItem(+b.dataset.ov, 'compo'); });
 })();
+document.getElementById('ovLg').innerHTML = heatLegend(HTONE, KIND === 'nfp' ? '綠＝就業增加多、失業率低（對景氣有利），赭紅＝不利；時薪成長改用藍（低）與赭紅（高）。顏色深淺＝與該項目 2016–2019 年（疫情前）同一衡量的平均相比，差距以平常的波動幅度衡量（約 2.5 倍時為滿色）。' : undefined);
 const trendY = (v, p) => Math.abs(v - p) < 0.3 ? '持平' : v > p ? '走高' : '走低';
 if (KIND === 'price') document.getElementById('p1').innerHTML = `
 <p>美國 ${mzh(lm)}${K.zh}季調後${chg(mA)}，前月為 ${f1(MM(A)[L - 1])}%，再前月為 ${f1(MM(A)[L - 2])}%。年增率由 ${f1(Y(A)[L - 1])}% ${yA > Y(A)[L - 1] ? '升至' : yA < Y(A)[L - 1] ? '降至' : '持平於'} ${f1(yA)}%${K.ref ? '，聯準會目標為 2%' : ''}。${K.coreZh}${chg(mC)}，年增 ${f1(yC)}%；核心 3 個月年化 ${f1(ann(IDX[C], 3))}%、6 個月年化 ${f1(ann(IDX[C], 6))}%（前月 6 個月年化 ${f1(val(IDX[C], 'ann6').v[L - 1])}%），${ann(IDX[C], 6) > yC + 0.2 ? '近半年的速度快於過去一年，通膨有再升溫跡象' : ann(IDX[C], 6) < yC - 0.2 ? '近半年的速度慢於過去一年，通膨持續降溫' : '近半年的速度與過去一年相近'}；核心年增率在過去一年大致${trendY(yC, Y(C)[L - 12])}，${yC < yA ? '總體高於核心，差距主要來自能源與食品。' : '總體低於核心，能源與食品壓低了總體。'}</p>
@@ -321,8 +325,9 @@ if (KIND === 'nfp') {
   for (const [n, pad] of OVN) {
     const i = IDX[n], a3 = dk3(i)[L], s6 = D.sa[i][L - 6] != null ? (D.sa[i][L] - D.sa[i][L - 6]) / 6 : null, b12 = a12(i);
     const d = a3 != null && b12 != null ? a3 - b12 : null, thr = Math.max(5, Math.abs(b12 || 0) * 0.25);
+    const s1 = heatStat(dk(i), M, L), s3 = heatStat(dk3(i), M, L), hz = (v, st, f, cls) => heatTd(f(v), heatZ(v, st), 'good', cls);
     h += `<tr><td style="padding-left:${9 + pad * 14}px"><button type="button" class="nm" data-ov="${i}">${esc(nm(i))}</button></td><td>${fk(D.sa[i][L])}</td>` +
-      `<td class="vl"><b>${sgk(dk(i)[L])}</b></td><td>${sgk(dk(i)[L - 1])}</td><td class="vl">${sgk(a3)}</td><td>${sgk(s6)}</td><td>${sgk(b12)}</td><td class="vl">${f1(Y(n)[L])}</td>` +
+      hz(dk(i)[L], s1, v => `<b>${sgk(v)}</b>`, 'vl') + hz(dk(i)[L - 1], s1, sgk) + hz(a3, s3, sgk, 'vl') + hz(s6, s3, sgk) + hz(b12, s3, sgk) + hz(Y(n)[L], heatStat(Y(n), M, L), f1, 'vl') +
       `<td class="vl" style="text-align:left">${momTag(d, thr)}</td><td class="vl" style="padding:2px 9px">${spark(dk3(i))}</td></tr>`;
   }
   const el = document.getElementById('ovt'); el.innerHTML = h + '</tbody>';
@@ -333,7 +338,9 @@ if (KIND === 'nfp') {
 <tr><th></th><th class="vl">${lb}</th><th>${mlab(M[L - 1])}</th><th class="vl">3M ago</th><th>12M ago</th><th class="vl"></th><th class="vl"></th></tr></thead><tbody>`;
   for (const [n, m, inv] of HH) {
     const v = val(IDX[n], m).v, dd = v[L] != null && v[L - 12] != null ? v[L] - v[L - 12] : null, unit = m === 'yoy' ? '% Y/Y' : IT[IDX[n]].u === '%' ? '%' : '';
-    h2 += `<tr><td><button type="button" class="nm" data-hh="${IDX[n]}">${esc(nm(IDX[n]))}</button> <span class="note">${unit}</span></td><td class="vl"><b>${f1(v[L])}</b></td><td>${f1(v[L - 1])}</td><td class="vl">${f1(v[L - 3])}</td><td>${f1(v[L - 12])}</td><td class="vl">${dd == null ? '' : (dd > 0 ? '+' : '') + dd.toFixed(1)}</td><td class="vl" style="padding:2px 9px">${spark(v)}</td></tr>`;
+    // unemployment up is bad; wage growth reads like a price; participation, employment and hours up are good
+    const tn = /^Unemployment|U-6/.test(n) ? 'bad' : n.startsWith('Average hourly') ? 'price' : 'good', st = heatStat(v, M, L), hz = (x, cls, b) => heatTd(b ? `<b>${f1(x)}</b>` : f1(x), heatZ(x, st), tn, cls);
+    h2 += `<tr><td><button type="button" class="nm" data-hh="${IDX[n]}">${esc(nm(IDX[n]))}</button> <span class="note">${unit}</span></td>${hz(v[L], 'vl', 1)}${hz(v[L - 1])}${hz(v[L - 3], 'vl')}${hz(v[L - 12])}<td class="vl">${dd == null ? '' : (dd > 0 ? '+' : '') + dd.toFixed(1)}</td><td class="vl" style="padding:2px 9px">${spark(v)}</td></tr>`;
   }
   const w2 = document.getElementById('ovt2w'); w2.hidden = false;
   const el2 = document.getElementById('ovt2'); el2.innerHTML = h2 + '</tbody>';
@@ -373,40 +380,11 @@ function tableCols() {
   first.hs = i => val(i, add ? 'dk' : 'mom').v;
   return [{ g: add ? 'Avg. monthly chg, thous.' : 'Annual avg. % chg', cols, row: true }, { g: 'Latest', cols: [first, { lab: `Y/Y ${mlab(M[L])}`, f: i => val(i, 'yoy').v[L], hs: i => val(i, 'yoy').v }] }];
 }
-// Heatmap, Bloomberg ECAN style: each cell is shaded by how far it sits from that item's own
-// pre-pandemic norm (2016-2019 average of the same measure), in units of the item's typical
-// variability (robust spread over all months, so the 2020 swings do not wash everything out).
-// Columns without a history (annual averages) are scaled within the row instead.
-function zStats(arr) {
-  const x = arr.filter(v => v != null && isFinite(v)), base = arr.filter((v, t) => v != null && isFinite(v) && M[t] >= '2016-01' && M[t] <= '2019-12');
-  if (x.length < 24) return null;
-  const med = a => { const b = [...a].sort((p, q) => p - q), k = b.length >> 1; return b.length % 2 ? b[k] : (b[k - 1] + b[k]) / 2; };
-  const ref = base.length >= 24 ? base : x, mu = ref.reduce((p, q) => p + q, 0) / ref.length;
-  const m0 = med(x), sd = 1.4826 * med(x.map(v => Math.abs(v - m0)));
-  return sd > 1e-9 ? { mu, sd } : null;
-}
-function heatBg(z) {
-  if (z == null || !isFinite(z)) return '';
-  const a = Math.min(1, Math.abs(z) / 2.5);
-  if (a < 0.12) return '';
-  const hot = z > 0, col = UPGOOD ? (hot ? '--c3' : '--c2') : (hot ? '--c2' : '--c1');
-  return ` style="background:color-mix(in srgb, var(${col}) ${Math.round(a * 62)}%, var(--paper))"`;
-}
 function heatCells(i, g) {
   const v = g.cols.map(c => c.f(i));
-  let z;
-  if (g.row) {
-    const x = v.filter(a => a != null), mu = x.reduce((a, b) => a + b, 0) / (x.length || 1), sd = Math.sqrt(x.reduce((a, b) => a + (b - mu) ** 2, 0) / (x.length || 1));
-    z = v.map(a => a == null || x.length < 3 || sd < 1e-9 ? null : (a - mu) / sd);
-  } else {
-    z = g.cols.map((c, j) => { if (v[j] == null || !c.hs) return null; const st = zStats(c.hs(i)); return st ? (v[j] - st.mu) / st.sd : null; });
-  }
-  return g.cols.map((c, j) => `<td class="hm${j ? '' : ' vl'}"${heatBg(z[j])}>${(c.fmt || f1)(v[j])}</td>`).join('');
+  const z = g.row ? heatRowZ(v) : g.cols.map((c, j) => c.hs ? heatZ(v[j], heatStat(c.hs(i), M, L)) : null);
+  return g.cols.map((c, j) => heatTd((c.fmt || f1)(v[j]), z[j], HTONE, j ? '' : 'vl')).join('');
 }
-let TC = null;
-// opens like a Bloomberg ECAN table: headline, core, and core split into goods and services
-const open = new Set([IDX[A], ...(VK[IDX[K.core]] ? [IDX[K.core], IDX[K.svc]] : [])]);
-let selI = null;
 function rowHtml(i, depth) {
   const kids = VK[i] || (IT[i].a ? [] : childrenOf(i)), mm = val(i, 'mom');
   const cr = kids.length ? `<button type="button" class="cr" data-t="${i}" aria-expanded="${open.has(i)}" aria-label="${open.has(i) ? 'Collapse' : 'Expand'} ${esc(IT[i].n)}">${open.has(i) ? '▾' : '▸'}</button>` : '<span class="sp"></span>';
@@ -427,8 +405,7 @@ function drawTable() {
   if (IT.some(it => it.a && !it.x)) h += `<tr class="gh"><td colspan="${nc}"><button type="button" class="cr" data-agg aria-expanded="${AGG_OPEN.v}">${AGG_OPEN.v ? '▾' : '▸'}</button>Special aggregates</td></tr>`;
   if (AGG_OPEN.v) IT.forEach((it, i) => { if (it.a && !it.x) h += rowHtml(i, 1); });
   document.getElementById('tbl').innerHTML = h + '</tbody>';
-  const sw = c => `<i style="background:color-mix(in srgb, var(${c}) 55%, var(--paper))"></i>`, [lo, hi] = UPGOOD ? ['--c2', '--c3'] : ['--c1', '--c2'];
-  document.getElementById('heatLg').innerHTML = `${sw(lo)}${UPGOOD ? '弱於' : '低於'}疫情前常態 ${sw(hi)}${UPGOOD ? '強於' : '高於'}疫情前常態<span>顏色深淺＝與該項目自己 2016–2019 年同一衡量的平均相比，差距以該項目平常的波動幅度衡量（約 2.5 倍時為滿色）。年度平均欄位改為在同一列內比較。</span>`;
+  document.getElementById('heatLg').innerHTML = heatLegend(HTONE, '顏色深淺＝與該項目自己 2016–2019 年（疫情前）同一衡量的平均相比，差距以該項目平常的波動幅度衡量（約 2.5 倍時為滿色）。年度平均欄位改為在同一列內比較。');
 }
 document.getElementById('tbl').addEventListener('click', ev => {
   const b = ev.target.closest('button'); if (!b) return;

@@ -45,10 +45,15 @@ document.getElementById('gp1').innerHTML = `<p>美國${qzh(lq)}實質 GDP 季增
 <tr><th></th>${qs.map((t, j) => `<th${j ? '' : ' class="vl"'}>${qlab(GQ[t])}</th>`).join('')}<th class="vl"></th><th class="vl">${qlab(GQ[GL])}</th><th class="vl"></th></tr></thead><tbody>`;
   for (const [n, a, y, pad] of rows) {
     const avg = qs.map(t => a[t]).filter(v => v != null), av = avg.length ? avg.reduce((p, c) => p + c, 0) / avg.length : null;
-    h += `<tr><td style="padding-left:${9 + pad * 14}px">${esc(n)}</td>${qs.map((t, j) => `<td${j ? '' : ' class="vl"'}>${j ? f1(a[t]) : `<b>${f1(a[t])}</b>`}</td>`).join('')}<td class="vl">${f1(av)}</td><td class="vl">${y ? f1(y[GL]) : ''}</td><td class="vl" style="padding:2px 9px">${sparkline(a.slice(0, GL + 1), 12)}</td></tr>`;
+    // the price index reads like inflation (terracotta/blue); the growth rows shade green when strong
+    const tn = n.startsWith('GDP price') ? 'price' : 'good', st = heatStat(a, GQ, GL);
+    const a4 = a.map((v, t) => t >= 3 && [0, 1, 2, 3].every(k => a[t - k] != null) ? (a[t] + a[t - 1] + a[t - 2] + a[t - 3]) / 4 : null);
+    h += `<tr><td style="padding-left:${9 + pad * 14}px">${esc(n)}</td>${qs.map((t, j) => heatTd(j ? f1(a[t]) : `<b>${f1(a[t])}</b>`, heatZ(a[t], st), tn, j ? '' : 'vl')).join('')}` +
+      `${heatTd(f1(av), heatZ(av, heatStat(a4, GQ, GL)), tn, 'vl')}${y ? heatTd(f1(y[GL]), heatZ(y[GL], heatStat(y, GQ, GL)), tn, 'vl') : '<td class="vl"></td>'}<td class="vl" style="padding:2px 9px">${sparkline(a.slice(0, GL + 1), 12)}</td></tr>`;
   }
   if (nc.v != null) h += `<tr><td>GDPNow nowcast, ${qlab(nc.q)}</td><td class="vl note" colspan="4" style="text-align:left">Atlanta Fed${nx.cons != null ? ` · consensus ${f1(nx.cons)}%` : ''}${nx.date ? ` · release ${fmtDate(nx.date)}` : ''}</td><td class="vl"></td><td class="vl"><b>${f1(nc.v)}</b></td><td class="vl"></td></tr>`;
   document.getElementById('govt').innerHTML = h + '</tbody>';
+  document.getElementById('gLg').innerHTML = heatLegend('good', '綠＝成長快於 2016–2019 年（疫情前）的平均，赭紅＝較慢；GDP 物價指數改用藍（低）與赭紅（高）。差距以該項目平常的波動幅度衡量（約 2.5 倍時為滿色）。');
 })();
 
 /* ---------- contributions: stacked chart + drill table ---------- */
@@ -128,18 +133,20 @@ function gCols() {
   const avgY = (a, y) => { const xs = GQ.map((q, t) => q.startsWith(y) && t <= GL ? a[t] : null).filter(v => v != null); return xs.length ? xs.reduce((p, c) => p + c, 0) / xs.length : null; };
   const cols = [{ lab: `${cy} (${lq.slice(5)})`, f: a => avgY(a, String(cy)) }];
   for (let y = cy - 1; y >= Math.max(first, cy - ny); y--) cols.push({ lab: String(y), f: a => avgY(a, String(y)) });
-  return [{ g: 'Avg. of quarterly contributions, pp', cols }];
+  return [{ g: 'Avg. of quarterly contributions, pp', cols, row: true }];
 }
 function gRow(k, depth) {
   const x = T[k], kids = x.kids || [], TCg = gCols();
   const cr = kids.length ? `<button type="button" class="cr" data-t="${k}" aria-expanded="${gopen.has(k)}">${gopen.has(k) ? '▾' : '▸'}</button>` : '<span class="sp"></span>';
   let h = `<tr class="${GST.hl === k || (GST.node === k && k !== 'gdp') ? 'sel' : ''}"><td style="padding-left:${6 + depth * 14}px">${cr}<button type="button" class="nm" data-p="${k}">${x.n}</button> <span class="note">${x.zh}</span></td>` +
-    TCg.map(g => g.cols.map((c, j) => `<td${j ? '' : ' class="vl"'}>${c.f(x.v) == null ? 'n.a.' : (k === 'gdp' ? f1(c.f(x.v)) : sgn(c.f(x.v)))}</td>`).join('')).join('') + '</tr>';
+    TCg.map(g => { const v = g.cols.map(c => c.f(x.v)), st = g.row ? null : heatStat(x.v, GQ, GL), z = g.row ? heatRowZ(v) : v.map(q => heatZ(q, st));
+      return g.cols.map((c, j) => heatTd(v[j] == null ? 'n.a.' : (k === 'gdp' ? f1(v[j]) : sgn(v[j])), z[j], 'good', j ? '' : 'vl')).join(''); }).join('') + '</tr>';
   if (gopen.has(k)) for (const c of kids) h += gRow(c, depth + 1);
   return h;
 }
 function gTable() {
   const TCg = gCols();
+  document.getElementById('gLg2').innerHTML = heatLegend('good', '綠＝該項目對成長的貢獻高於 2016–2019 年（疫情前）的平均，赭紅＝較低；差距以該項目平常的波動幅度衡量。年度平均欄位改為在同一列內比較。');
   document.getElementById('gtbl').innerHTML = `<thead><tr class="grp"><th>Real GDP (% chg, SAAR) and contributions</th>${TCg.map(g => `<th class="vl" colspan="${g.cols.length}">${g.g}</th>`).join('')}</tr><tr><th></th>${TCg.map(g => g.cols.map((c, j) => `<th${j ? '' : ' class="vl"'}>${c.lab}</th>`).join('')).join('')}</tr></thead><tbody>${gRow('gdp', 0)}</tbody>`;
 }
 function gSelect(k, scroll) {

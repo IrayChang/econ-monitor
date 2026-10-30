@@ -205,6 +205,40 @@ function sparkline(arr, n = 24, ref = null) {
 const fmtDate = s => { const [y, m, d] = s.split('-'); return `${MON[+m - 1]} ${+d} ${y}`; };
 
 /* ---------- page shell ---------- */
+/* ---------- heatmap shading (Bloomberg ECAN style), shared by every table ---------- */
+// Each cell is compared with its own series: centred on the 2016-2019 average (the pre-pandemic norm;
+// the whole sample when that is too short) and scaled by the series' robust spread (1.4826 x median
+// absolute deviation over all periods), so the 2020 swings do not wash the colours out.
+function heatStat(a, D, upTo = a.length - 1) {
+  const x = [], base = [];
+  for (let t = 0; t <= upTo; t++) { const v = a[t]; if (v == null || !isFinite(v)) continue; x.push(v); if (D[t] >= '2016' && D[t] < '2020') base.push(v); }
+  if (x.length < 16) return null;
+  const med = q => { const b = [...q].sort((p, r) => p - r), k = b.length >> 1; return b.length % 2 ? b[k] : (b[k - 1] + b[k]) / 2; };
+  const ref = base.length >= 12 ? base : x, mu = ref.reduce((p, r) => p + r, 0) / ref.length;
+  const m0 = med(x), sd = 1.4826 * med(x.map(v => Math.abs(v - m0)));
+  return sd > 1e-9 ? { mu, sd } : null;
+}
+const heatZ = (v, st) => v == null || !isFinite(v) || !st ? null : (v - st.mu) / st.sd;
+// z within one row, for columns that have no history of their own (annual averages)
+function heatRowZ(vals) {
+  const x = vals.filter(v => v != null && isFinite(v)); if (x.length < 3) return vals.map(() => null);
+  const mu = x.reduce((p, r) => p + r, 0) / x.length, sd = Math.sqrt(x.reduce((p, r) => p + (r - mu) ** 2, 0) / x.length);
+  return vals.map(v => v == null || sd < 1e-9 ? null : (v - mu) / sd);
+}
+// tone: 'price' (high = terracotta, low = blue), 'good' (high = green, low = terracotta), 'bad' (the reverse)
+function heatBg(z, tone) {
+  if (z == null || !isFinite(z)) return '';
+  const a = Math.min(1, Math.abs(z) / 2.5);
+  if (a < 0.12) return '';
+  const up = z > 0, col = tone === 'good' ? (up ? '--c3' : '--c2') : tone === 'bad' ? (up ? '--c2' : '--c3') : (up ? '--c2' : '--c1');
+  return ` style="background:color-mix(in srgb, var(${col}) ${Math.round(a * 62)}%, transparent)"`;
+}
+const heatTd = (html, z, tone, cls = '') => `<td class="hm${cls ? ' ' + cls : ''}"${heatBg(z, tone)}>${html}</td>`;
+function heatLegend(kind, note) {
+  const sw = c => `<i style="background:color-mix(in srgb, var(${c}) 55%, transparent)"></i>`;
+  const keys = kind === 'price' ? `${sw('--c1')}低於常態 ${sw('--c2')}高於常態` : `${sw('--c3')}優於常態（對景氣有利）${sw('--c2')}劣於常態`;
+  return `${keys}<span>${note || '顏色深淺＝與該項目自己 2016–2019 年（疫情前）同一衡量的平均相比，差距以該項目平常的波動幅度衡量（約 2.5 倍時為滿色）。'}</span>`;
+}
 function mount(id) { document.getElementById('app').appendChild(document.getElementById(id).content.cloneNode(true)); }
 (function nav() {
   document.getElementById('nav').innerHTML = NAV.map(([g, xs]) => `<span class="ng">${g ? `<span class="ngl">${g}</span>` : ''}${xs.map(([k, l]) =>

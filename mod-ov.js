@@ -241,11 +241,14 @@ function renderTbl(){
   GROUPS.forEach(([g,z,en])=>{ h+=`<tr class="hdr"><td class="nm" colspan="11"><span class="lab">${en} · ${z}</span></td></tr>`;
     IND.filter(i=>i.g===g).forEach(ind=>{ const r=read(ind), P=PER(ind), c=ind.cons?ind.cons():null, nx=cal.find(x=>x.src===ind.src&&x.d>=TODAY);
       const tv=r.tt>=0?ind.trend[r.tt]:null;
-      h+=`<tr data-src="${ind.src}" data-id="${ind.id}"><td class="nm">${esc(ind.n)}</td><td>${val(ind,ind.fast[r.tf])} <span class="zh" style="font-size:10px;color:var(--dim)">${ind.fl}</span></td><td>${r.per?lab(r.per):'—'}</td>
-        <td>${val(ind,tv)} <span style="font-size:10px;color:var(--dim)">${ind.tl}</span></td><td style="color:${mc(ind,r.dir)}">${dirLab(r)}</td><td style="color:${mc(ind,r.dir)}">${r.d==null?'—':sg(r.d,ind.d)}</td>
+      // heatmap (shared helpers in core.js): each value against the indicator's own pre-pandemic norm
+      const tn=ind.good>0?'good':ind.good<0&&ind.g!=='inf'?'bad':'price', fv=ind.fast[r.tf];
+      h+=`<tr data-src="${ind.src}" data-id="${ind.id}"><td class="nm">${esc(ind.n)}</td>${heatTd(`${val(ind,fv)} <span class="zh" style="font-size:10px;color:var(--dim)">${ind.fl}</span>`,heatZ(fv,heatStat(ind.fast,P,r.tf)),tn)}<td>${r.per?lab(r.per):'—'}</td>
+        ${heatTd(`${val(ind,tv)} <span style="font-size:10px;color:var(--dim)">${ind.tl}</span>`,heatZ(tv,heatStat(ind.trend,P,r.tt)),tn)}<td style="color:${mc(ind,r.dir)}">${dirLab(r)}</td><td style="color:${mc(ind,r.dir)}">${r.d==null?'—':sg(r.d,ind.d)}</td>
         <td style="color:${mc(ind,r.turn)}">${turnLab(r)}</td><td style="color:${c==null?'var(--dim)':c>0?'var(--good)':c<0?'var(--bad)':'var(--muted)'}">${c==null?'—':sg(c,1)}</td>
         <td>${ind.target!=null&&tv!=null?`${sg(tv-ind.target,1)} vs ${ind.target}%`:ind.ref!=null?`${ind.ref}${ind.u==='%'?'%':''}`:'—'}</td><td>${spark(ind)}</td><td>${nx?dzh(nx.d):'—'}</td></tr>`; }); });
   $('#oTbl').innerHTML=h+'</tbody>';
+  $('#oLg').innerHTML=heatLegend('good','「最新」與「趨勢線」欄位上色：綠＝對景氣有利、赭紅＝不利；通膨與時薪改用藍（低）與赭紅（高）。顏色深淺＝與該指標 2016–2019 年（疫情前）的平均相比，差距以平常的波動幅度衡量（約 2.5 倍時為滿色）。');
   $('#oTbl').querySelectorAll('tr[data-src]').forEach(r=>{ r.style.cursor='pointer'; r.onclick=()=>{ location.hash=r.dataset.src; }; });
 }
 

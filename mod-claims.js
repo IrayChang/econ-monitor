@@ -28,9 +28,15 @@ document.getElementById('cp1').innerHTML = `<p>截至 ${fmtDate(wk)} 當週，�
 <tr><th></th><th class="vl">ending</th><th class="vl">Value</th><th>Chg</th><th class="vl">4 wks ago</th><th>52 wks ago</th><th class="vl">%</th><th class="vl"></th></tr></thead><tbody>`;
   for (const [n, a, t, u] of rows) {
     const v = a[t], fm = u === '%' ? x => f1(x) : fk;
-    h += `<tr><td>${n}</td><td class="vl note">${wlab(W[t])}</td><td class="vl"><b>${fm(v)}</b></td><td>${u === '%' ? (v - a[t - 1] ? sg(v - a[t - 1]) : '0.0') : sgk(v - a[t - 1])}</td><td class="vl">${fm(a[t - 4])}</td><td>${fm(a[t - 52])}</td><td class="vl">${u === '%' ? '' : f1((v / a[t - 52] - 1) * 100)}</td><td class="vl" style="padding:2px 9px">${sparkline(a.slice(0, t + 1), 52)}</td></tr>`;
+    // claims and the insured rate up are bad; ADP employment is a level, so only its changes are shaded
+    const tn = u === 'lvl' ? 'good' : 'bad', st = u === 'lvl' ? null : heatStat(a, W, t), hz = (x, html, cls) => heatTd(html, heatZ(x, st), tn, cls);
+    const yy = a.map((x, j) => j >= 52 && x != null && a[j - 52] ? (x / a[j - 52] - 1) * 100 : null), dd = dif(a);
+    h += `<tr><td>${n}</td><td class="vl note">${wlab(W[t])}</td>${hz(v, `<b>${fm(v)}</b>`, 'vl')}` +
+      heatTd(u === '%' ? (v - a[t - 1] ? sg(v - a[t - 1]) : '0.0') : sgk(v - a[t - 1]), heatZ(dd[t], heatStat(dd, W, t)), tn) +
+      `${hz(a[t - 4], fm(a[t - 4]), 'vl')}${hz(a[t - 52], fm(a[t - 52]))}${u === '%' ? '<td class="vl"></td>' : heatTd(f1(yy[t]), heatZ(yy[t], heatStat(yy, W, t)), tn, 'vl')}<td class="vl" style="padding:2px 9px">${sparkline(a.slice(0, t + 1), 52)}</td></tr>`;
   }
   document.getElementById('cov').innerHTML = h + '</tbody>';
+  document.getElementById('cLg').innerHTML = heatLegend('good', '綠＝初領、續領與投保失業率低於疫情前常態（勞動市場較緊），赭紅＝高於常態。顏色深淺＝與該項目 2016–2019 年的平均相比，差距以平常的波動幅度衡量（約 2.5 倍時為滿色）；ADP 為人數水準，只比較變動。'); 
 })();
 /* ---------- overview: monthly companions ---------- */
 const MON_ITEMS = IT_.filter(it => it.axis === 'm' && it.grp !== 'adp_ind' && it.grp !== 'adp_size' && it.k !== 'CNP16OV');
@@ -40,9 +46,12 @@ const MON_ITEMS = IT_.filter(it => it.axis === 'm' && it.grp !== 'adp_ind' && it
     let a = get(it.k, 'm'); const isLvl = it.k === 'ADP'; if (isLvl) a = dif(a);
     const t = lastIdx(a); if (t < 0) continue;
     const fm = it.unit === '%' ? f1 : isLvl ? sgk : fk;
-    h += `<tr><td>${esc(isLvl ? 'ADP private employment, monthly change' : it.n)} <span class="note">${esc(it.zh)}${it.unit === '%' ? ' · %' : ''} · ${plab(MM_[t])}</span></td><td class="vl"><b>${fm(a[t])}</b></td><td>${fm(a[t - 1])}</td><td class="vl">${fm(a[t - 3])}</td><td>${fm(a[t - 12])}</td><td class="vl" style="padding:2px 9px">${sparkline(a.slice(0, t + 1), 24)}</td></tr>`;
+    // ADP hiring up is good; pay growth reads like a price; the unemployment counts up are bad
+    const tn = isLvl ? 'good' : it.grp === 'pay' ? 'price' : 'bad', st = heatStat(a, MM_, t), hz = (j, cls, b) => heatTd(b ? `<b>${fm(a[j])}</b>` : fm(a[j]), heatZ(a[j], st), tn, cls);
+    h += `<tr><td>${esc(isLvl ? 'ADP private employment, monthly change' : it.n)} <span class="note">${esc(it.zh)}${it.unit === '%' ? ' · %' : ''} · ${plab(MM_[t])}</span></td>${hz(t, 'vl', 1)}${hz(t - 1)}${hz(t - 3, 'vl')}${hz(t - 12)}<td class="vl" style="padding:2px 9px">${sparkline(a.slice(0, t + 1), 24)}</td></tr>`;
   }
   document.getElementById('cov2').innerHTML = h + '</tbody>';
+  document.getElementById('cLg2').innerHTML = heatLegend('good', '綠＝對就業有利（失業人數少、ADP 增加多），赭紅＝不利；薪資成長改用藍（低）與赭紅（高）。顏色深淺＝與該項目 2016–2019 年（疫情前）的平均相比，差距以平常的波動幅度衡量。');
 })();
 
 /* ---------- charts ---------- */

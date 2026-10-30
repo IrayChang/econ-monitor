@@ -23,6 +23,12 @@ const avgN = (a, t, n) => { const xs = a.slice(Math.max(0, t - n + 1), t + 1).fi
 const state50 = (v, c) => v == null ? '' : c === 'Prices' ? (v > 50 ? '上漲' : '下跌') : c === 'Supplier Deliveries' ? (v > 50 ? '變慢' : '變快') : c.includes('Inventor') && c !== 'Inventory Sentiment' ? (v > 50 ? '增加' : '減少') : (v > 50 ? '擴張' : '收縮');
 const tone = (v, c) => v == null ? '' : ((v > 50) !== INV.has(c)) ? 'var(--c3)' : 'var(--c2)';
 const RANGES = { '1Y': 12, '2Y': 24, '3Y': 36, '5Y': 60, Max: 0 };
+// diffusion indexes are shaded by distance from 50, as in the components heatmap (12 points = full colour);
+// changes are shaded against the index's own month-to-month history
+const lvTd = (v, c, html, cls) => heatTd(html, v == null ? null : (v - 50) / 12 * 2.5, INV.has(c) ? 'bad' : 'good', cls);
+const chTd = (a, t, c, cls) => { const d = a.map((x, j) => j && x != null && a[j - 1] != null ? x - a[j - 1] : null);
+  return heatTd(sgn(d[t]), heatZ(d[t], heatStat(d, AX, t)), INV.has(c) ? 'bad' : 'good', cls); };
+const SLG = heatLegend('good', '數值欄位：顏色深淺＝離 50 多遠（差 12 點為滿色），綠＝對景氣有利的方向，赭紅＝不利（物價、客戶存貨反向）。變動欄位：與該指數平常的月變動相比。');
 
 if (DK === 'ism') {
   const mH = iv('m', 'Manufacturing PMI'), sH = iv('s', 'Services PMI'), mC = IS('m:cons'), sC = IS('s:cons');
@@ -43,8 +49,8 @@ if (DK === 'ism') {
 <tr><th></th><th class="vl">${mlab(lm)} '${lm.slice(2, 4)}</th><th>${mlab(AX[L_ - 1])}</th><th>Chg</th><th class="vl">3M</th><th>12M</th><th class="vl"></th><th class="vl"></th><th class="vl"></th></tr></thead><tbody>`;
     COMP[sec].forEach((c, j) => {
       const a = iv(sec, c), v = a[L_];
-      h += `<tr><td style="padding-left:${j ? 23 : 9}px"><button type="button" class="nm" data-s="${sec}:${esc(c)}">${esc(c)}</button> <span class="note">${ZH[c] || ''}</span></td><td class="vl"><b>${f1(v)}</b></td><td>${f1(a[L_ - 1])}</td><td>${sgn(v != null && a[L_ - 1] != null ? v - a[L_ - 1] : null)}</td>` +
-        `<td class="vl">${f1(avgN(a, L_, 3))}</td><td>${f1(avgN(a, L_, 12))}</td><td class="vl" style="text-align:left;color:${tone(v, c)}">${state50(v, c)}</td>` +
+      h += `<tr><td style="padding-left:${j ? 23 : 9}px"><button type="button" class="nm" data-s="${sec}:${esc(c)}">${esc(c)}</button> <span class="note">${ZH[c] || ''}</span></td>${lvTd(v, c, `<b>${f1(v)}</b>`, 'vl')}${lvTd(a[L_ - 1], c, f1(a[L_ - 1]))}${chTd(a, L_, c)}` +
+        `${lvTd(avgN(a, L_, 3), c, f1(avgN(a, L_, 3)), 'vl')}${lvTd(avgN(a, L_, 12), c, f1(avgN(a, L_, 12)))}<td class="vl" style="text-align:left;color:${tone(v, c)}">${state50(v, c)}</td>` +
         `<td class="vl">${j ? '' : `${f1(cons[L_])} <span class="note">(${sgn(v - cons[L_])})</span>`}</td><td class="vl" style="padding:2px 9px">${sparkline(a.slice(0, L_ + 1), 24, 50)}</td></tr>`;
     });
     return h + '</tbody>';
@@ -52,6 +58,7 @@ if (DK === 'ism') {
   document.getElementById('sov').innerHTML = ovRows('m');
   document.getElementById('sov2').innerHTML = ovRows('s');
   document.getElementById('sov2w').hidden = false;
+  document.getElementById('sLg').innerHTML = SLG;
 
   // heatmap of components
   let hsec = store.get('hsec') || 'm';
@@ -101,10 +108,12 @@ if (DK === 'ism') {
   const ism = { mfg: IS('m:Manufacturing PMI'), svc: IS('s:Services PMI'), cmp: null };
   for (const [s, n, zh] of SEC) {
     const v = fl(s)[Lf], c = flc(s)[Lf];
-    h += `<tr><td><button type="button" class="nm" data-s="sp:${s}">${n}</button> <span class="note">${zh}</span></td><td class="vl"><b>${f1(v)}</b></td><td>${f1(c)}</td><td>${v != null && c != null ? sgn(v - c) : ''}</td><td class="vl">${f1(fi(s)[Lz])}</td><td>${f1(fi(s)[Lz - 1])}</td>` +
-      `<td class="vl" style="text-align:left;color:${tone(v, n)}">${state50(v, n)}</td><td class="vl">${ism[s] ? f1(ism[s][Lz]) : ''}</td><td class="vl" style="padding:2px 9px">${sparkline(fi(s).slice(0, Lz + 1), 24, 50)}</td></tr>`;
+    const sp = v != null && c != null ? v - c : null;
+    h += `<tr><td><button type="button" class="nm" data-s="sp:${s}">${n}</button> <span class="note">${zh}</span></td>${lvTd(v, n, `<b>${f1(v)}</b>`, 'vl')}${lvTd(c, n, f1(c))}${heatTd(sp == null ? '' : sgn(sp), sp == null ? null : sp / 2 * 2.5, 'good')}${lvTd(fi(s)[Lz], n, f1(fi(s)[Lz]), 'vl')}${lvTd(fi(s)[Lz - 1], n, f1(fi(s)[Lz - 1]))}` +
+      `<td class="vl" style="text-align:left;color:${tone(v, n)}">${state50(v, n)}</td>${ism[s] ? lvTd(ism[s][Lz], n, f1(ism[s][Lz]), 'vl') : '<td class="vl"></td>'}<td class="vl" style="padding:2px 9px">${sparkline(fi(s).slice(0, Lz + 1), 24, 50)}</td></tr>`;
   }
   document.getElementById('sov').innerHTML = h + '</tbody>';
+  document.getElementById('sLg').innerHTML = SLG.replace('變動欄位：與該指數平常的月變動相比。', '預期差（Surprise）：綠＝優於預期，差 2 點為滿色。');
   document.getElementById('sheatSec').hidden = true;
   const gap = s => fl(s)[Lf] - fi(s)[Lz];
   document.getElementById('sp1').innerHTML = `<p>${mzh(lm)} S&P Global 美國綜合 PMI 初值為 ${f1(fl('cmp')[Lf])}，前月終值 ${f1(fi('cmp')[Lz])}（${sgn(gap('cmp'))}）。製造業初值 ${f1(fl('mfg')[Lf])}，${fl('mfg')[Lf] >= flc('mfg')[Lf] ? '高於' : '低於'}預期的 ${f1(flc('mfg')[Lf])}；服務業初值 ${f1(fl('svc')[Lf])}，${fl('svc')[Lf] >= flc('svc')[Lf] ? '高於' : '低於'}預期的 ${f1(flc('svc')[Lf])}。</p>
