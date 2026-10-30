@@ -385,6 +385,10 @@ function heatCells(i, g) {
   const z = g.row ? heatRowZ(v) : g.cols.map((c, j) => c.hs ? heatZ(v[j], heatStat(c.hs(i), M, L)) : null);
   return g.cols.map((c, j) => heatTd((c.fmt || f1)(v[j]), z[j], HTONE, j ? '' : 'vl')).join('');
 }
+let TC = null;
+// opens like a Bloomberg ECAN table: headline, core, and core split into goods and services
+const open = new Set([IDX[A], ...(VK[IDX[K.core]] ? [IDX[K.core], IDX[K.svc]] : [])]);
+let selI = null;
 function rowHtml(i, depth) {
   const kids = VK[i] || (IT[i].a ? [] : childrenOf(i)), mm = val(i, 'mom');
   const cr = kids.length ? `<button type="button" class="cr" data-t="${i}" aria-expanded="${open.has(i)}" aria-label="${open.has(i) ? 'Collapse' : 'Expand'} ${esc(IT[i].n)}">${open.has(i) ? '▾' : '▸'}</button>` : '<span class="sp"></span>';
