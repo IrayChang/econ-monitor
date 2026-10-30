@@ -391,7 +391,10 @@ const open = new Set([IDX[A], ...(VK[IDX[K.core]] ? [IDX[K.core], IDX[K.svc]] : 
 let selI = null;
 function rowHtml(i, depth) {
   const kids = VK[i] || (IT[i].a ? [] : childrenOf(i)), mm = val(i, 'mom');
-  const cr = kids.length ? `<button type="button" class="cr" data-t="${i}" aria-expanded="${open.has(i)}" aria-label="${open.has(i) ? 'Collapse' : 'Expand'} ${esc(IT[i].n)}">${open.has(i) ? '▾' : '▸'}</button>` : '<span class="sp"></span>';
+  // PCE's core is a stand-alone row that always shows core goods and core services, so it has no toggle
+  const fixed = i === IDX[K.core] && IT[i].a && VK[i];
+  if (fixed) open.add(i);
+  const cr = fixed ? '<span class="sp"></span>' : kids.length ?`<button type="button" class="cr" data-t="${i}" aria-expanded="${open.has(i)}" aria-label="${open.has(i) ? 'Collapse' : 'Expand'} ${esc(IT[i].n)}">${open.has(i) ? '▾' : '▸'}</button>` : '<span class="sp"></span>';
   let h = `<tr data-i="${i}" class="${selI === i ? 'sel' : ''}${IT[i].p ? ' prod' : ''}"><td style="padding-left:${6 + depth * 14}px">${cr}<button type="button" class="nm" data-p="${i}">${esc(nm(i) === IT[i].n ? IT[i].n : nm(i))}</button>${mm.nsa ? ' <span class="note">NSA</span>' : ''}</td>` +
     `<td>${IT[i].w != null ? IT[i].w.toFixed(1) : ''}</td>` +
     TC.map(g => heatCells(i, g)).join('') + '</tr>';
