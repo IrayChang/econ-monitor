@@ -137,6 +137,29 @@ function hv(el, o) {
   hit.addEventListener('mousemove', move); hit.addEventListener('mouseleave', out);
   hit.addEventListener('touchstart', move, { passive: true }); hit.addEventListener('touchmove', move, { passive: true });
   hit.addEventListener('touchend', out);
+  if (o.big) return;
+  // click (or the corner button on touch screens) opens the same chart enlarged
+  el.insertAdjacentHTML('beforeend', '<button type="button" class="zoom" aria-label="放大圖表" title="放大">⤢</button>');
+  el.querySelector('.zoom').addEventListener('click', () => openChart(o));
+  if (!matchMedia('(hover: none)').matches) { svg.style.cursor = 'zoom-in'; svg.addEventListener('click', () => openChart(o)); }
+}
+function closeChart() {
+  const ov = document.getElementById('hvzoom'); if (!ov || ov.hidden) return;
+  ov.hidden = true; ov.querySelector('.zc').innerHTML = ''; document.body.style.overflow = '';
+}
+function openChart(o) {
+  let ov = document.getElementById('hvzoom');
+  if (!ov) {
+    ov = document.createElement('div'); ov.id = 'hvzoom'; ov.hidden = true;
+    ov.innerHTML = '<div class="zbox" role="dialog" aria-modal="true" aria-label="放大圖表"><button type="button" class="zx" aria-label="關閉">✕</button><div class="zc"></div></div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', ev => { if (ev.target === ov || ev.target.closest('.zx')) closeChart(); });
+    addEventListener('keydown', ev => { if (ev.key === 'Escape') closeChart(); });
+  }
+  const narrow = innerWidth < 700;
+  ov.hidden = false; document.body.style.overflow = 'hidden';
+  hv(ov.querySelector('.zc'), { ...o, W: narrow ? 460 : 900, H: narrow ? 400 : 520, big: true });
+  ov.querySelector('.zx').focus();
 }
 
 
