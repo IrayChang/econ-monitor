@@ -246,5 +246,5 @@ function mount(id) { document.getElementById('app').appendChild(document.getElem
 })();
 (function load() {
   const add = src => new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.body.appendChild(s); });
-  add(`data-${MOD}.js`).then(() => add(`mod-${MOD}.js`)).catch(() => { document.getElementById('app').textContent = '資料載入失敗，請重新整理。'; });
+  add(`data-${MOD}.js`).then(() => add(`mod-${MOD}.js`)).then(() => add('data-lead.js')).then(() => add('mod-lead.js')).catch(() => { document.getElementById('app').textContent = '資料載入失敗，請重新整理。'; });
 })();
