@@ -56,16 +56,22 @@
   const MF = '2016-01', QF = '2016-Q1';
   if (DK === 'cpi') {
     nowcast('cpi');
-    const rent = yoy(toQ(m.CPI_RENT), 4), oer = yoy(toQ(m.CPI_OER), 4), ntr = q.NTR, nl = lastI(ntr), rl = lastI(rent);
+    const rent = yoy(m.CPI_RENT, 12), oer = yoy(m.CPI_OER, 12), zr = yoy(m.ZORI, 12), zl = lastI(zr), rl = lastI(rent);
     const cg = yoy(m.CPI_CG, 12), ix = yoy(m.IMPXF, 12), il = lastI(ix);
+    // least squares of CPI rent growth on ZORI growth 12 months earlier: the rent pace today's ZORI implies a year ahead
+    const fit = y => { const p = []; for (let t = 12; t < y.length; t++) if (y[t] != null && zr[t - 12] != null) p.push([zr[t - 12], y[t]]);
+      const n = p.length, mx = p.reduce((s, x) => s + x[0], 0) / n, my = p.reduce((s, x) => s + x[1], 0) / n;
+      const b = p.reduce((s, x) => s + (x[0] - mx) * (x[1] - my), 0) / p.reduce((s, x) => s + (x[0] - mx) ** 2, 0); return v => my + b * (v - mx); };
+    const ahead = extend(LM, 12)[zl + 12];
     section('Leading indicators',
-      'CPI 房租與自有住房等值租金（OER）對所有租約抽樣，舊租約要到續約才反映新價格，所以落後市場租金。BLS 的新承租戶租金指數只看新簽約的租金，2014 年以來大約領先 CPI 房租 4 季（相關係數 0.87）；圖中虛線往後移 4 季畫。進口物價（不含燃料）則大約領先核心商品 CPI 2–3 個月。',
+      'CPI 房租與自有住房等值租金（OER）對所有租約抽樣，舊租約要到續約才反映新價格，所以落後市場租金。Zillow 觀測租金指數（ZORI）量的是市場上新掛牌的租金；Zillow Research 指出 ZORI 領先 CPI 房租最多 12 個月，用 2016 年以來的資料驗證，ZORI 年增在落後 12 個月時與 CPI 房租年增的相關性最高（0.90），與 OER 為 12–14 個月（約 0.83）。圖中虛線把 ZORI 往後移 12 個月畫。進口物價（不含燃料）則大約領先核心商品 CPI 2–3 個月。',
       ['ld1', 'ld2'],
-      `新承租戶租金 ${pLab(LQ[nl])}年增 <b>${f1(ntr[nl])}%</b>，對應 4 季後（${pLab(extend(LQ, 4)[nl + 4])}）；CPI 房租 ${pLab(LQ[rl])}年增 ${f1(rent[rl])}%，OER ${f1(oer[rl])}%。新承租戶租金自 2023 年起明顯低於 CPI 房租，代表 CPI 房租仍有放緩空間。BLS 因 2025 年 10 月政府停擺漏收資料，自 2026 年 4 月暫停發布這項指數，最新只到 2025 年第 3 季。進口物價（不含燃料）${mzh(LM[il])}年增 ${f1(ix[il])}%，核心商品 CPI 年增 ${f1(cg[lastI(cg)])}%。`);
-    chart({ id: 'ld1', axis: LQ, k: 4, from: QF, title: 'Rent: New-Tenant Rents Lead CPI Rent', sub: '% change, 4 quarters', src: 'BLS (CPI; R-CPI-NTR research index)', ref: null,
-      series: [{ name: 'New tenant rent, 4Q later', v: later(ntr, 4), c: '--c2', dash: 1 }, { name: 'CPI: Rent of primary residence', v: rent, c: '--c1' }, { name: "CPI: Owners' equivalent rent", v: oer, c: '--c3' }] });
+      `ZORI ${mzh(LM[zl])}年增 <b>${f1(zr[zl])}%</b>，對應 12 個月後（${mzh(ahead)}）；CPI 房租 ${mzh(LM[rl])}年增 ${f1(rent[rl])}%，OER ${f1(oer[rl])}%。以 CPI 房租年增對 12 個月前 ZORI 年增的簡單迴歸推算，${mzh(ahead)} CPI 房租年增約 <b>${f1(fit(rent)(zr[zl]))}%</b>、OER 約 <b>${f1(fit(oer)(zr[zl]))}%</b>（只用 ZORI 一個變數，僅供參考）。進口物價（不含燃料）${mzh(LM[il])}年增 ${f1(ix[il])}%，核心商品 CPI 年增 ${f1(cg[lastI(cg)])}%。`);
+    chart({ id: 'ld1', axis: LM, k: 12, from: '2016-01', title: 'Rent: Zillow Asking Rents Lead CPI Rent', sub: '% change, year over year', src: 'Zillow Research (ZORI, SA); BLS (CPI)',
+      series: [{ name: 'Zillow observed rent index, 12M later', v: later(zr, 12), c: '--c2', dash: 1 }, { name: 'CPI: Rent of primary residence', v: rent, c: '--c1' }, { name: "CPI: Owners' equivalent rent", v: oer, c: '--c3' }] });
     chart({ id: 'ld2', axis: LM, k: 3, from: MF, title: 'Import Prices Lead Core Goods', sub: '% change, year over year', src: 'BLS (import prices; CPI)',
       series: [{ name: 'Import prices ex fuels, 3M later (NSA)', v: later(ix, 3), c: '--c2', dash: 1 }, { name: 'CPI: Core goods', v: cg, c: '--c1' }] });
+    html += `<p class="note">ZORI 資料來源：Zillow Research（zillow.com/research/data），全美、所有房型含多戶住宅、季調後的平滑序列；ZORI 為民間資料，其餘為官方資料。</p>`;
   }
   if (DK === 'pce') {
     nowcast('pce');
@@ -88,7 +94,7 @@
       series: [{ name: 'Compensation of employees', v: YY('COMP'), c: '--c1' }, { name: 'Transfer receipts', v: YY('TRAN'), c: '--c2' }, { name: 'Income on assets', v: YY('ASSET'), c: '--c3' }, { name: "Proprietors' income", v: YY('PROP'), c: '--c4' }] });
     chart({ id: 'ld4', axis: LM, from: '2023-01', title: 'Payroll Income: BLS Early Read vs. BEA', sub: '% change, year over year', src: 'BLS (CES); BEA',
       series: [{ name: 'Aggregate weekly payrolls (BLS)', v: yoy(m.AWP, 12), c: '--c2' }, { name: 'Wages and salaries (BEA)', v: YY('WAGE'), c: '--c1' }] });
-    html += `<p class="note">房租的領先指標（BLS 新承租戶租金）見 CPI 頁：PCE 的房租數字直接取自 CPI。資料來源：BEA 個人所得與支出；總週薪資指數來自 BLS 就業報告，比 BEA 早約三週公布。</p>`;
+    html += `<p class="note">房租的領先指標（Zillow ZORI）見 CPI 頁：PCE 的房租數字直接取自 CPI。資料來源：BEA 個人所得與支出；總週薪資指數來自 BLS 就業報告，比 BEA 早約三週公布。</p>`;
   }
   if (DK === 'ppi') {
     const pg = yoy(m.PPI_G, 12), ip = m.ISM_P, il = lastI(ip), gl = lastI(pg);
