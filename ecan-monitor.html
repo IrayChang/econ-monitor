@@ -160,6 +160,85 @@
   </div>
   <p class="note">初領與續領失業金來自勞動部每週四發布的報告（續領晚一週）；失業原因來自 BLS 家計調查；ADP 週資料與薪資來自 ADP Research。</p>
 </template>
+<template id="tpl-mm">
+  <div class="meta"><b>USA</b> | <span id="dt"></span></div>
+  <h1 id="hd"></h1>
+  <div id="mp1"></div>
+
+  <h2 class="sec">Overview</h2>
+  <div class="tblw"><table id="mt"></table></div>
+
+  <h2 class="sec">Rate corridor</h2>
+  <p class="how">隔夜利率在聯準會的管理利率之間：上限是常備附買回操作（SRP）利率，下限是 ON RRP 利率，中間是準備金利率 IORB。SOFR、TGCR、BGCR 是擔保（附買回）利率，EFFR 是無擔保的聯邦資金利率。擔保利率高於 EFFR，代表附買回市場比銀行間市場緊。</p>
+  <div class="charts" style="grid-template-columns:1fr"><div class="hv" id="mc1"></div></div>
+  <div class="charts">
+    <div class="hv" id="mc2"></div>
+    <div class="hv" id="mc3"></div>
+  </div>
+
+  <h2 class="sec">Term funding</h2>
+  <p class="how">期限資金成本以官方資料呈現：紐約聯準銀行的 SOFR Averages 是過去 30、90、180 天 SOFR 的複利平均（回顧型，不是 Term SOFR 那種前瞻利率）；國庫券殖利率是無風險的前瞻期限利率；商業本票利率是企業與金融機構的無擔保短期借款成本。商業本票減國庫券的利差反映信用與資金溢價。CME Term SOFR 與 OIS 屬授權資料，不在本頁範圍。</p>
+  <div class="charts">
+    <div class="hv" id="mc4"></div>
+    <div class="hv" id="mc5"></div>
+  </div>
+  <div class="charts">
+    <div class="hv" id="mc6"></div>
+    <div class="hv" id="mc7"></div>
+  </div>
+  <p class="note">資料來源：紐約聯準銀行 SOFR、TGCR、BGCR、EFFR（含百分位與交易量）、SOFR Averages、ON RRP 與常備附買回操作；聯準會理事會 IORB 與商業本票利率（經聖路易聯準銀行 FRED 提供）；美國財政部每日公債殖利率曲線（國庫券）。</p>
+</template>
+<template id="tpl-ust">
+  <div class="meta"><b>USA</b> | <span id="dt"></span></div>
+  <h1 id="hd"></h1>
+  <div id="up1"></div>
+
+  <h2 class="sec">Overview</h2>
+  <div class="tblw"><table id="ut"></table></div>
+
+  <h2 class="sec">Yield curve</h2>
+  <p class="how">每日收盤的公債面值殖利率。10 年減 2 年與 10 年減 3 個月是最常用的衰退訊號：倒掛（低於 0）在過去幾次衰退前都出現過，但 2022–2024 年的長時間倒掛並未伴隨衰退，所以只當成風險訊號。蝶式價差＝2×10 年 − 2 年 − 30 年（基點）：數值變大代表中段（10 年）相對兩端變便宜。2 年期減 EFFR 大於 0，表示市場預期未來兩年政策利率偏升，小於 0 表示預期降息。</p>
+  <div class="charts">
+    <div class="hv" id="uc0"></div>
+    <div class="tblw curvet" id="uct"></div>
+  </div>
+  <div class="charts">
+    <div class="hv" id="uc1"></div>
+    <div class="hv" id="uc2"></div>
+  </div>
+  <div class="charts">
+    <div class="hv" id="uc3"></div>
+    <div class="hv" id="uc4"></div>
+  </div>
+
+  <h2 class="sec">Inflation compensation and term premium</h2>
+  <p class="how">實質殖利率來自抗通膨公債（TIPS），名目減實質是損益兩平通膨率（市場隱含的平均通膨，含通膨風險溢酬）。5 年後 5 年遠期損益兩平由 5 年與 10 年損益兩平推算。期限溢酬取自紐約聯準銀行 ACM 模型：10 年期殖利率拆成「預期短率的平均」（風險中立殖利率）與「持有長債要求的額外報酬」（期限溢酬）。模型用的是零息殖利率，與面值殖利率略有差異。</p>
+  <div class="charts">
+    <div class="hv" id="uc5"></div>
+    <div class="hv" id="uc6"></div>
+  </div>
+  <div class="charts">
+    <div class="hv" id="uc7"></div>
+    <div class="hv" id="uc8"></div>
+  </div>
+
+  <h2 class="sec">Auctions</h2>
+  <p class="how">附息公債標售結果。投標倍數（bid-to-cover）越高、初級交易商得標比重越低，代表需求越好；交易商得標比重高，表示終端投資人需求不足、由交易商承接。「與近 6 次比」是同期限前 6 次標售的平均。財政部只公布得標利率，沒有公布發行前（when-issued）殖利率，所以本頁不計算尾差（tail）。</p>
+  <div class="tblw"><table id="ua"></table></div>
+  <div class="charts">
+    <div class="hv" id="ua1"></div>
+    <div class="tblw" id="us"></div>
+  </div>
+
+  <h2 class="sec">Quarterly refunding (QRA)</h2>
+  <p class="how">財政部每季公布兩份文件：週一下午的「可交易債務借款估計」（本季與下季預計向民間淨借多少，以及假設的季末 TGA 現金餘額），以及週三上午的再融資政策聲明（標售規模與發行指引）。淨借款越多，國庫券與附息債供給越多；季末現金餘額假設越高，TGA 會抽走越多準備金。</p>
+  <div id="uq"></div>
+  <div class="charts">
+    <div class="hv" id="uq1"></div>
+    <div class="tblw" id="uqt"></div>
+  </div>
+  <p class="note">資料來源：美國財政部每日公債與實質殖利率曲線、Fiscal Data 標售結果、季度再融資文件（借款估計新聞稿、暫定標售時程）；紐約聯準銀行 ACM 期限溢酬與 EFFR。互換利差（swap spread）需要 SOFR 互換利率，屬授權資料，不在本頁範圍。</p>
+</template>
 <template id="tpl-liq">
   <div class="meta"><b>USA</b> | <span id="dt"></span></div>
   <h1 id="hd"></h1>

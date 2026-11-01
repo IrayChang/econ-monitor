@@ -1,7 +1,7 @@
 /* Macro brief core: shared helpers, Haver-style chart, navigation and module loader */
-const ROUTES = { overview: 'ov', cpi: 'tree', pce: 'tree', ppi: 'tree', nfp: 'tree', retail: 'tree', gdp: 'gdp', ism: 'survey', spgi: 'survey', pulse: 'claims', liquidity: 'liq' };
+const ROUTES = { overview: 'ov', cpi: 'tree', pce: 'tree', ppi: 'tree', nfp: 'tree', retail: 'tree', gdp: 'gdp', ism: 'survey', spgi: 'survey', pulse: 'claims', money: 'mm', treasuries: 'ust', liquidity: 'liq' };
 const NAV = [['', [['overview', 'Overview']]], ['Inflation', [['cpi', 'CPI'], ['pce', 'PCE'], ['ppi', 'PPI']]], ['Labor', [['nfp', 'Payrolls'], ['pulse', 'Claims']]],
-  ['Activity', [['retail', 'Retail'], ['gdp', 'GDP']]], ['Surveys', [['ism', 'ISM'], ['spgi', 'S&P PMI']]], ['Rates & liquidity', [['liquidity', 'Fed liquidity']]]];
+  ['Activity', [['retail', 'Retail'], ['gdp', 'GDP']]], ['Surveys', [['ism', 'ISM'], ['spgi', 'S&P PMI']]], ['Rates & liquidity', [['money', 'Money markets'], ['treasuries', 'Treasuries'], ['liquidity', 'Fed liquidity']]]];
 const DK = ROUTES[location.hash.slice(1)] ? location.hash.slice(1) : 'overview', MOD = ROUTES[DK];
 addEventListener('hashchange', () => location.reload());
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
