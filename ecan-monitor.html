@@ -171,7 +171,7 @@
   <p class="hlg">淨流動性＝聯準會總資產 − TGA − ON RRP（不含外國官方逆回購），衡量留在民間金融體系的央行資金。bp＝基點（0.01 個百分點）。</p>
 
   <h2 class="sec">Rate corridor</h2>
-  <p class="how">聯準會用三個管理利率圍出隔夜利率的區間：上限是常備附買回（SRF，即 ON RP）最低利率，下限是 ON RRP 利率，中間是準備金利率 IORB。SOFR 與 EFFR 是市場利率；若 SOFR 經常貼近或超過 SRF 利率，代表準備金不足、資金緊。</p>
+  <p class="how">聯準會用三個管理利率圍出隔夜利率的區間：上限是常備附買回操作（SRP，即 ON RP）利率，下限是 ON RRP 利率，中間是準備金利率 IORB。SOFR 與 EFFR 是市場利率；若 SOFR 經常貼近或超過 SRP 利率，代表準備金不足、資金緊。</p>
   <div class="charts" style="grid-template-columns:1fr"><div class="hv" id="lc1"></div></div>
   <div class="charts">
     <div class="hv" id="lc2"></div>
@@ -184,7 +184,15 @@
     <div class="hv" id="la1"></div>
     <div class="hv" id="la2"></div>
   </div>
-  <div class="charts" style="grid-template-columns:1fr"><div class="hv" id="la3"></div></div>
+  <p class="how">聯準會理事會研究（Anderson 等，2026）與紐約聯準銀行 Perli 的演講都指出，2025 年底準備金轉緊的訊號最先出現在附買回市場：利率在 IORB 以上的附買回交易比例升高、SOFR 高百分位突破 SRP 上限，而 EFFR 變化不大。以下三張圖追蹤這些訊號。紐約聯準銀行的「IORB 以上附買回比例」並未公開成序列，此處改用 SOFR 公布的第 1、25、50、75、99 百分位推出上下界。</p>
+  <div class="charts">
+    <div class="hv" id="la4"></div>
+    <div class="hv" id="la6"></div>
+  </div>
+  <div class="charts">
+    <div class="hv" id="la5"></div>
+    <div class="hv" id="la3"></div>
+  </div>
 
   <h2 class="sec">Fed balance sheet</h2>
   <p class="how">H.4.1 每週四公布週三的資產負債表。資產端看縮表（QT）速度；負債端的準備金、TGA 與 ON RRP 三者互相消長：總資產不變時，TGA 或 ON RRP 增加，準備金就減少。</p>
@@ -203,7 +211,7 @@
     <div class="hv" id="lt1"></div>
     <div class="hv" id="lt2"></div>
   </div>
-  <p class="note">資料來源：聯準會理事會 H.4.1 與 IORB（經聖路易聯準銀行 FRED 提供；理事會的資料下載服務即將停用並指向 FRED）；紐約聯準銀行 SOFR、EFFR、ON RRP 與附買回操作；美國財政部 Daily Treasury Statement；銀行總資產取自聯準會理事會 H.8（所有商業銀行，季調）；準備金需求彈性取自紐約聯準銀行 Reserve Demand Elasticity。利率互換（IRS）屬授權商業資料，不在本頁範圍。</p>
+  <p class="note">資料來源：聯準會理事會 H.4.1 與 IORB（經聖路易聯準銀行 FRED 提供；理事會的資料下載服務即將停用並指向 FRED）；紐約聯準銀行 SOFR（含百分位）、EFFR、TGCR、ON RRP 與常備附買回操作（SRP）；美國財政部 Daily Treasury Statement；銀行總資產取自聯準會理事會 H.8（所有商業銀行，季調）；準備金需求彈性取自紐約聯準銀行 Reserve Demand Elasticity。利率互換（IRS）屬授權商業資料，不在本頁範圍。</p>
 </template>
 <template id="tpl-ov">
   <div class="meta"><b>USA</b> | <span id="ovdt"></span></div>
