@@ -63,7 +63,8 @@ function hv(el, o) {
   for (const side of ['L', 'R']) {
     const ss = o.series.filter(q => q.axis === side);
     if (!ss.length) continue;
-    let [lo, hi] = ext(ss.map(q => q.v), s, e);
+    // o.bands: shaded ranges [{ name, lo, hi, c, op }] on the left axis (confidence bands)
+    let [lo, hi] = ext(ss.map(q => q.v).concat(side === 'L' ? (o.bands || []).flatMap(b => [b.lo, b.hi]) : []), s, e);
     if (o.bar || (lo > 0 && o.zero)) { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
     const t = nice(lo, hi, 5);
     axes[side] = { ...t, Y: v => y1 - (v - t.lo) / (t.hi - t.lo) * (y1 - y0) };
@@ -105,6 +106,11 @@ function hv(el, o) {
       g += `<text x="${(X(idx[0]) + X(idx[idx.length - 1])) / 2}" y="${y1 + 15}" font-size="10.5" text-anchor="middle">${yr.slice(2)}</text>`;
     });
   }
+  for (const b of o.bands || []) {
+    let up = '', dn = '';
+    for (let i = s; i <= e; i++) if (b.lo[i] != null && b.hi[i] != null) { up += (up ? 'L' : 'M') + X(i).toFixed(1) + ' ' + AL.Y(b.hi[i]).toFixed(1); dn = 'L' + X(i).toFixed(1) + ' ' + AL.Y(b.lo[i]).toFixed(1) + dn; }
+    if (up) g += `<path d="${up}${dn}Z" fill="${css(b.c)}" fill-opacity="${b.op || .18}" stroke="none"/>`;
+  }
   // series
   const nb = o.bar ? o.series.length : 0; let bk = 0;
   for (const q of o.series) {
@@ -134,6 +140,10 @@ function hv(el, o) {
       : `<line x1="${x0 + 6}" x2="${x0 + 20}" y1="${ly - 3}" y2="${ly - 3}" stroke="${col}" stroke-width="1.6" ${q.dash ? 'stroke-dasharray="4 2.5"' : ''}/>`;
     g += `<text x="${x0 + 25}" y="${ly}" font-size="10" style="fill:${col}">${esc(q.name)}${q.nsa ? ' (NSA)' : ''}${dual ? ` (${q.axis})` : ''}</text>`;
   });
+  (o.bands || []).forEach((b, k) => {
+    const ly = y0 + 12 + (o.series.length + k) * 13;
+    g += `<rect x="${x0 + 6}" y="${ly - 7}" width="14" height="8" fill="${css(b.c)}" fill-opacity="${b.op || .18}"/><text x="${x0 + 25}" y="${ly}" font-size="10">${esc(b.name)}</text>`;
+  });
   g += `<text x="${x0 - 30}" y="${H - 4}" font-size="10">Source:  ${o.src || K.src}</text>`;
   g += `<line class="xh" y1="${y0}" y2="${y1}" stroke="${css('--axis')}" stroke-width=".6" visibility="hidden"/>`;
   g += `<rect class="hit" x="${x0}" y="${y0}" width="${x1 - x0}" height="${y1 - y0}" fill="transparent"/>`;
@@ -145,7 +155,8 @@ function hv(el, o) {
     const i = Math.max(s, Math.min(e, Math.floor(s + (sx - x0) / xw)));
     xl.setAttribute('x1', X(i)); xl.setAttribute('x2', X(i)); xl.setAttribute('visibility', 'visible');
     tip.innerHTML = `<b>${plab(MO[i])}</b><br>` + o.series.map(q =>
-      `<span style="color:${css(q.c)}">■</span> ${esc(q.name)}: ${q.v[i] == null ? 'n.a.' : o.fmt ? o.fmt(q.v[i]) : (o.unit ? f1(q.v[i]) + o.unit : q.v[i].toFixed(1))}`).join('<br>');
+      `<span style="color:${css(q.c)}">■</span> ${esc(q.name)}: ${q.v[i] == null ? 'n.a.' : o.fmt ? o.fmt(q.v[i]) : (o.unit ? f1(q.v[i]) + o.unit : q.v[i].toFixed(1))}`).join('<br>') +
+      (o.bands || []).filter(b => b.lo[i] != null && b.hi[i] != null).map(b => `<br>${esc(b.name)}: ${o.fmt ? o.fmt(b.lo[i]) : b.lo[i].toFixed(1)} to ${o.fmt ? o.fmt(b.hi[i]) : b.hi[i].toFixed(1)}`).join('');
     tip.style.display = 'block';
     const px = X(i) / W * r.width, tw = tip.offsetWidth;
     tip.style.left = (px + 14 + tw > r.width ? px - tw - 4 : px + 14) + 'px';
