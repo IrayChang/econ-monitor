@@ -160,6 +160,43 @@
   </div>
   <p class="note">初領與續領失業金來自勞動部每週四發布的報告（續領晚一週）；失業原因來自 BLS 家計調查；ADP 週資料與薪資來自 ADP Research。</p>
 </template>
+<template id="tpl-liq">
+  <div class="meta"><b>USA</b> | <span id="dt"></span></div>
+  <h1 id="hd"></h1>
+  <div id="lp1"></div>
+
+  <h2 class="sec">Overview</h2>
+  <div class="tblw"><table id="lw"></table></div>
+  <div class="tblw"><table id="ld"></table></div>
+  <p class="hlg">淨流動性＝聯準會總資產 − TGA − ON RRP（不含外國官方逆回購），衡量留在民間金融體系的央行資金。bp＝基點（0.01 個百分點）。</p>
+
+  <h2 class="sec">Rate corridor</h2>
+  <p class="how">聯準會用三個管理利率圍出隔夜利率的區間：上限是常備附買回（SRF，即 ON RP）最低利率，下限是 ON RRP 利率，中間是準備金利率 IORB。SOFR 與 EFFR 是市場利率；若 SOFR 經常貼近或超過 SRF 利率，代表準備金不足、資金緊。</p>
+  <div class="charts" style="grid-template-columns:1fr"><div class="hv" id="lc1"></div></div>
+  <div class="charts">
+    <div class="hv" id="lc2"></div>
+    <div class="hv" id="lc3"></div>
+  </div>
+
+  <h2 class="sec">Fed balance sheet</h2>
+  <p class="how">H.4.1 每週四公布週三的資產負債表。資產端看縮表（QT）速度；負債端的準備金、TGA 與 ON RRP 三者互相消長：總資產不變時，TGA 或 ON RRP 增加，準備金就減少。</p>
+  <div class="charts">
+    <div class="hv" id="lb1"></div>
+    <div class="hv" id="lb2"></div>
+  </div>
+  <div class="charts">
+    <div class="hv" id="lb3"></div>
+    <div class="hv" id="lb4"></div>
+  </div>
+
+  <h2 class="sec">Treasury cash and backstops</h2>
+  <p class="how">TGA 取自財政部每日國庫報表，比 H.4.1 早一週看到變化；繳稅日與發債結算日 TGA 會跳升、準備金下降。貼現窗口與附買回的使用量平時很小，突然放大代表有機構需要緊急資金。</p>
+  <div class="charts">
+    <div class="hv" id="lt1"></div>
+    <div class="hv" id="lt2"></div>
+  </div>
+  <p class="note">資料來源：聯準會理事會 H.4.1 與 IORB（經聖路易聯準銀行 FRED 提供；理事會的資料下載服務即將停用並指向 FRED）；紐約聯準銀行 SOFR、EFFR、ON RRP 與附買回操作；美國財政部 Daily Treasury Statement。利率互換（IRS）屬授權商業資料，不在本頁範圍。</p>
+</template>
 <template id="tpl-ov">
   <div class="meta"><b>USA</b> | <span id="ovdt"></span></div>
   <h1>Overview</h1>
