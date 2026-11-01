@@ -70,7 +70,7 @@
 #ovapp td.nm{text-align:left;font-family:var(--f-ui);max-width:330px;overflow:hidden;text-overflow:ellipsis}
 #ovapp td.nm .zh{font-family:var(--f-zh);color:var(--muted);font-size:11px;margin-left:6px}
 #ovapp tbody tr{cursor:pointer}
-#ovapp tbody tr:hover td{background:#14171d}
+#ovapp tbody tr:hover td:not([style*="background"]){background:var(--sel)}
 #ovapp tbody tr.on td{background:var(--sel)!important}
 #ovapp tr.d0 td.nm{color:var(--amber);font-weight:600}
 #ovapp tr.d1 td.nm{font-weight:600}
