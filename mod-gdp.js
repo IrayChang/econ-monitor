@@ -30,7 +30,6 @@ const lq = GQ[GL], nx = G.meta.next || {}, nc = G.meta.nowcast || {};
 /* ---------- article ---------- */
 const g0 = S.gdp[GL], core = S.fspdp[GL], cn = k => T[k].v[GL];
 document.getElementById('dt').textContent = `Data through ${lq.slice(5)} ${lq.slice(0, 4)}`;
-document.getElementById('demo').textContent = `Demo：Economy in Brief 的版面與出版圖風格，加上互動。GDP 為季資料，貢獻是 BEA 公布的官方數字。資料至 ${qzh(lq)}。`;
 document.getElementById('hd').textContent = `美國第 ${lq.slice(-1)} 季實質 GDP 年率 ${f1(g0)}%，核心 GDP ${f1(core)}%`;
 const sgn = v => (v >= 0 ? '+' : '') + v.toFixed(2);
 document.getElementById('gp1').innerHTML = `<p>美國${qzh(lq)}實質 GDP 季增年率 ${f1(g0)}%，前一季 ${f1(S.gdp[GL - 1])}%，年增 ${f1(S.gdpy[GL])}%。排除存貨、淨出口與政府支出的「核心 GDP」（對國內民間買家的最終銷售）成長 ${f1(core)}%，${core > g0 + 0.5 ? '高於總體，內需比總數看起來更強' : core < g0 - 0.5 ? '低於總體，總數有部分來自波動較大的項目' : '與總體接近'}。</p>

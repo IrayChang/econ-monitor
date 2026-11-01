@@ -13,7 +13,6 @@
 <aside class="side" id="side" aria-label="選單">
   <div class="sideh"><span class="sbrand" id="sbrand"></span><button type="button" class="sidebtn" id="sideClose" aria-label="收起側欄" title="收起側欄"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M9 4v16"/></svg></button></div>
   <nav class="dsnav" id="nav" aria-label="Dataset"></nav>
-  <div class="demo" id="demo"></div>
 </aside>
 <button type="button" class="sidebtn sideopen" id="sideOpen" aria-label="展開側欄" title="展開側欄" aria-controls="side"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M9 4v16"/></svg></button>
 <div class="scrim" id="scrim" hidden></div>
@@ -24,7 +23,7 @@
   <div class="meta"><b>USA</b> | <span id="dt"></span></div>
   <h1 id="hd"></h1>
 
-  <h2 class="sec">Overview</h2>
+  <h2 class="sec">Snapshot</h2>
   <p class="how" id="ovHow">動能＝3 個月年化相對年增：高出 0.3 個百分點以上為加速（紅），低 0.3 以上為降溫（藍）。點列可在 Components 拆開該項目。</p>
   <div class="tblw"><table id="ovt"></table></div>
   <div class="tblw" id="ovt2w" hidden><table id="ovt2"></table></div>
@@ -71,7 +70,7 @@
   <div class="meta"><b>USA</b> | <span id="dt"></span></div>
   <h1 id="hd"></h1>
 
-  <h2 class="sec">Overview</h2>
+  <h2 class="sec">Snapshot</h2>
   <p class="how">季增年率（SAAR）：季增率連乘四季。核心 GDP＝對國內民間買家的最終銷售（消費＋民間固定投資），排除波動大的存貨、淨出口與政府支出。</p>
   <div class="tblw"><table id="govt"></table></div>
   <p class="hlg" id="gLg"></p>
@@ -105,7 +104,7 @@
   <div class="meta"><b>USA</b> | <span id="dt"></span></div>
   <h1 id="hd"></h1>
 
-  <h2 class="sec">Overview</h2>
+  <h2 class="sec">Snapshot</h2>
   <p class="how">擴散指數以 50 為分界：高於 50 代表回覆「增加」的企業多於「減少」。點分項名稱可在下方大圖畫出。</p>
   <div class="tblw"><table id="sov"></table></div>
   <div class="tblw" id="sov2w" hidden><table id="sov2"></table></div>
@@ -137,7 +136,7 @@
   <div class="meta"><b>USA</b> | <span id="dt"></span></div>
   <h1 id="hd"></h1>
 
-  <h2 class="sec">Overview</h2>
+  <h2 class="sec">Snapshot</h2>
   <div class="tblw"><table id="cov"></table></div>
   <p class="hlg" id="cLg"></p>
   <div id="cp1"></div>
@@ -165,7 +164,7 @@
   <h1 id="hd"></h1>
   <div id="mp1"></div>
 
-  <h2 class="sec">Overview</h2>
+  <h2 class="sec">Snapshot</h2>
   <div class="tblw"><table id="mt"></table></div>
 
   <h2 class="sec">Rate corridor</h2>
@@ -193,7 +192,7 @@
   <h1 id="hd"></h1>
   <div id="up1"></div>
 
-  <h2 class="sec">Overview</h2>
+  <h2 class="sec">Snapshot</h2>
   <div class="tblw"><table id="ut"></table></div>
 
   <h2 class="sec">Yield curve</h2>
@@ -244,18 +243,10 @@
   <h1 id="hd"></h1>
   <div id="lp1"></div>
 
-  <h2 class="sec">Overview</h2>
+  <h2 class="sec">Snapshot</h2>
   <div class="tblw"><table id="lw"></table></div>
   <div class="tblw"><table id="ld"></table></div>
   <p class="hlg">淨流動性＝聯準會總資產 − TGA − ON RRP（不含外國官方逆回購），衡量留在民間金融體系的央行資金。bp＝基點（0.01 個百分點）。</p>
-
-  <h2 class="sec">Rate corridor</h2>
-  <p class="how">聯準會用三個管理利率圍出隔夜利率的區間：上限是常備附買回操作（SRP，即 ON RP）利率，下限是 ON RRP 利率，中間是準備金利率 IORB。SOFR 與 EFFR 是市場利率；若 SOFR 經常貼近或超過 SRP 利率，代表準備金不足、資金緊。</p>
-  <div class="charts" style="grid-template-columns:1fr"><div class="hv" id="lc1"></div></div>
-  <div class="charts">
-    <div class="hv" id="lc2"></div>
-    <div class="hv" id="lc3"></div>
-  </div>
 
   <h2 class="sec">Reserve ampleness</h2>
   <p class="how">準備金是否「充足」（ample）看兩件事：準備金占銀行總資產的比率，以及 EFFR 對準備金變動的敏感度。紐約聯準銀行的準備金需求彈性（RDE）衡量準備金增加相當於銀行資產 1% 時，EFFR 減 IORB 會變動幾個 bp：接近 0 是「過剩」（abundant），小幅為負是「充足」，明顯為負代表準備金開始「稀缺」（scarce），利率對準備金變動變得敏感。散布圖中的水平分層，部分來自聯準會對 IORB 在目標區間內位置的技術性調整，並非準備金需求本身的變化。</p>
@@ -289,9 +280,12 @@
   <div class="charts" style="grid-template-columns:1fr"><div class="hv" id="lb5"></div></div>
 
   <h2 class="sec">Treasury cash and backstops</h2>
-  <p class="how">TGA 取自財政部每日國庫報表，比 H.4.1 早一週看到變化；繳稅日與發債結算日 TGA 會跳升、準備金下降。貼現窗口與附買回的使用量平時很小，突然放大代表有機構需要緊急資金。</p>
+  <p class="how">TGA 取自財政部每日國庫報表，比 H.4.1 早一週看到變化；繳稅日與發債結算日 TGA 會跳升、準備金下降。ON RRP 餘額代表貨幣市場基金停在聯準會的閒置資金；常備附買回（SRP）、貼現窗口與附買回的使用量平時很小，突然放大代表有機構需要緊急資金。隔夜利率走廊見 Money markets 頁。</p>
   <div class="charts">
     <div class="hv" id="lt1"></div>
+    <div class="hv" id="lc3"></div>
+  </div>
+  <div class="charts">
     <div class="hv" id="lt2"></div>
   </div>
   <p class="note">資料來源：聯準會理事會 H.4.1 與 IORB（經聖路易聯準銀行 FRED 提供；理事會的資料下載服務即將停用並指向 FRED）；紐約聯準銀行 SOFR（含百分位）、EFFR、TGCR、ON RRP 與常備附買回操作（SRP）；美國財政部 Daily Treasury Statement；銀行總資產取自聯準會理事會 H.8（所有商業銀行，季調）；準備金需求彈性取自紐約聯準銀行 Reserve Demand Elasticity；名目 GDP 取自 BEA（最新一季之後沿用最新值）；附息公債交割日取自財政部 Fiscal Data 標售資料。利率互換（IRS）屬授權商業資料，不在本頁範圍。</p>

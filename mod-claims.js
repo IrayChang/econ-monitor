@@ -12,7 +12,6 @@ const fk = v => v == null ? 'n.a.' : Math.round(v).toLocaleString('en-US');
 const sgk = v => v == null ? '' : (v >= 0 ? '+' : '−') + Math.abs(Math.round(v)).toLocaleString('en-US');
 const wlab = s => `${MON[+s.slice(5, 7) - 1]} ${+s.slice(8)}`;
 document.getElementById('dt').textContent = `Week ending ${fmtDate(wk)}`;
-document.getElementById('demo').textContent = `Demo：Economy in Brief 的版面與出版圖風格，加上互動。週資料只有單一序列、沒有細項，所以只用總覽表加出版圖。資料至 ${fmtDate(wk)} 當週。`;
 document.getElementById('hd').textContent = `美國 ${wlab(wk)} 當週初領失業金 ${fk(ICSA[LW])} 千人，續領 ${(CCSA[LC] / 1000).toFixed(3)} 百萬人`;
 // lowest/highest since helper for the narrative
 const since = (a, t, low) => { for (let j = t - 1; j >= 0; j--) if (a[j] != null && (low ? a[j] <= a[t] : a[j] >= a[t])) return W[j]; return null; };

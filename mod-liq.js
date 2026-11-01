@@ -61,7 +61,6 @@ const wlab = s => `${MON[+s.slice(5, 7) - 1]} ${+s.slice(8)}`;
 const lastOn = (a, t) => { for (let j = t; j >= 0; j--) if (a[j] != null) return j; return -1; };
 
 document.getElementById('dt').textContent = `Week ending ${fmtDate(WK[LW])} · Daily to ${fmtDate(DY[LD])}`;
-document.getElementById('demo').textContent = `Demo：聯準會資產負債表（H.4.1，每週四公布週三數字）、準備金、財政部 TGA，以及貨幣市場利率與央行操作（每日）。週資料至 ${fmtDate(WK[LW])}，日資料至 ${fmtDate(DY[LD])}。`;
 const tS = lastOn(SOFR, LD), sp = S_IORB[tS];
 document.getElementById('hd').textContent = `聯準會總資產 ${tn(WALCL[LW])} 兆美元，準備金 ${tn(RES[LW])} 兆，SOFR ${sp > 0 ? '高於' : sp < 0 ? '低於' : '等於'} IORB ${Math.abs(sp)} bp`;
 
@@ -188,22 +187,6 @@ const fmtv = v => Math.abs(v) >= 100 ? fb(v) : Math.abs(v) >= 10 ? v.toFixed(1) 
 const wopt = def => ({ months: WK.slice(0, LW + 1), cat: WCAT, ranges: WR, fmt: fmtv, src: 'Federal Reserve Board H.4.1', W: 460, H: 330, def });
 const dopt = (def, src) => ({ months: DY.slice(0, LD + 1), cat: DCAT, ranges: DR, fmt: fmtv, src: src || 'Federal Reserve Bank of New York', W: 460, H: 330, def });
 
-// the policy corridor: five rates on one chart, so it keeps its own range buttons instead of the four-line picker
-(function corridor() {
-  const el = document.getElementById('lc1'); el.innerHTML = '<div class="plot"></div><div class="tb"></div>';
-  const plot = el.querySelector('.plot'), tb = el.querySelector('.tb'), months = DY.slice(0, LD + 1);
-  const series = [{ name: 'Standing Repo Operations (SRP) Rate', v: cd(SRFR), c: '--axis', dash: 1 }, { name: 'IORB', v: cd(IORB), c: '--c4', dash: 1 },
-    { name: 'SOFR', v: cd(SOFR), c: '--c1' }, { name: 'EFFR', v: cd(EFFR), c: '--c2' }, { name: 'ON RRP Offering Rate', v: cd(RRPR), c: '--c3', dash: 1 }].map(s => ({ ...s, axis: 'L' }));
-  let r = store.get('lc1') || '1Y'; if (!(r in DR)) r = '1Y';
-  const draw = () => {
-    const N = months.length, start = DR[r] ? Math.max(0, N - DR[r]) : 0, nw = el.clientWidth < 560;
-    hv(plot, { W: nw ? 460 : 940, H: nw ? 360 : 360, months, start, title: nw ? 'Policy Rate Corridor' : 'Policy Rate Corridor and Overnight Money-Market Rates', sub: nw ? '%, Overnight Rates' : '%', src: 'Federal Reserve Board; Federal Reserve Bank of New York', series, fmt: v => v.toFixed(2) });
-    tb.innerHTML = `<span class="seg" role="group" aria-label="Range">${Object.keys(DR).map(k => `<button type="button" data-r="${k}" aria-pressed="${k === r}">${k}</button>`).join('')}</span>`;
-  };
-  tb.addEventListener('click', ev => { const b = ev.target.closest('button[data-r]'); if (!b) return; r = b.dataset.r; store.set('lc1', r); draw(); });
-  draw(); SC.lc1 = { draw };
-})();
-seriesChart('lc2', dopt({ title: 'Repo Pressure: Overnight Rates Less IORB', sub: 'Basis points', r: '1Y', ref: 0, hl: HL, ids: [{ k: 's_iorb' }, { k: 'e_iorb' }, { k: 's99' }] }));
 seriesChart('lc3', dopt({ title: 'Fed Facilities: ON RRP and SRP Take-Up', sub: '$ bn, Daily', r: '2Y', ids: [{ k: 'rrp' }, { k: 'srf', ax: 'R' }] }));
 seriesChart('la1', { ...wopt({ title: 'Reserves as a Share of Bank Assets', sub: '%, Wednesday Level; EFFR − IORB, bp (R)', r: 'Max', ids: [{ k: 'resr' }, { k: 'eiorbw', ax: 'R' }] }),
   src: 'FRB H.4.1, H.8; FRBNY' });

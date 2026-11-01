@@ -34,7 +34,6 @@ if (DK === 'ism') {
   const mH = iv('m', 'Manufacturing PMI'), sH = iv('s', 'Services PMI'), mC = IS('m:cons'), sC = IS('s:cons');
   const L_ = Math.max(lastIdx(mH), lastIdx(sH)), lm = AX[L_];
   document.getElementById('dt').textContent = ISM.meta.pub ? `Mfg ${fmtDate(ISM.meta.pub.m)} · Services ${fmtDate(ISM.meta.pub.s)}` : `Data through ${plab(lm)}`;
-  document.getElementById('demo').textContent = `Demo：Economy in Brief 的版面與出版圖風格，加上互動。ISM 指數以 50 為擴張與收縮分界，各分項不能相加，所以用熱度圖取代堆疊圖。資料至 ${mzh(lm)}。`;
   document.getElementById('hd').textContent = `美國 ${+lm.slice(5)} 月 ISM 製造業 PMI ${f1(mH[L_])}，服務業 ${f1(sH[L_])}`;
   const surp = (a, c) => a[L_] != null && c[L_] != null ? `${a[L_] >= c[L_] ? '高於' : '低於'}市場預期的 ${f1(c[L_])}` : '';
   const comps = sec => COMP[sec].slice(1).map(c => [c, iv(sec, c)]).filter(([, a]) => a[L_] != null);
@@ -101,7 +100,6 @@ if (DK === 'ism') {
   const fl = s => SP(`${s}:flash`), fi = s => SP(`${s}:final`), flc = s => SP(`${s}:flashFc`);
   const Lf = Math.max(...SEC.map(([s]) => lastIdx(fl(s)))), Lz = Math.max(...SEC.map(([s]) => lastIdx(fi(s)))), lm = AX[Lf];
   document.getElementById('dt').textContent = `Flash ${plab(AX[Lf])} · Final ${plab(AX[Lz])}`;
-  document.getElementById('demo').textContent = `Demo：Economy in Brief 的版面與出版圖風格，加上互動。S&P Global PMI 每月先公布初值（flash），約一週後公布終值；以 50 為擴張與收縮分界。`;
   document.getElementById('hd').textContent = `美國 ${+lm.slice(5)} 月 S&P Global 綜合 PMI 初值 ${f1(fl('cmp')[Lf])}，製造業 ${f1(fl('mfg')[Lf])}，服務業 ${f1(fl('svc')[Lf])}`;
   let h = `<thead><tr class="grp"><th>S&P Global US PMI</th><th class="vl" colspan="3">Flash</th><th class="vl" colspan="2">Final</th><th class="vl">vs. 50</th><th class="vl">ISM</th><th class="vl">24 mo.</th></tr>
 <tr><th></th><th class="vl">${mlab(AX[Lf])} '${AX[Lf].slice(2, 4)}</th><th>Consensus</th><th>Surprise</th><th class="vl">${mlab(AX[Lz])}</th><th>${mlab(AX[Lz - 1])}</th><th class="vl"></th><th class="vl">${mlab(AX[Lz])}</th><th class="vl"></th></tr></thead><tbody>`;

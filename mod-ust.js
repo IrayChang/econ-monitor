@@ -23,8 +23,7 @@ const LD = lastI(Y.T10Y), tA = lastI(TP10);
 const AU = Q.auctions || [], SCH = Q.schedule || [], QRA = Q.qra || [];
 
 document.getElementById('dt').textContent = `Daily to ${fmtDate(DY[LD])}`;
-document.getElementById('demo').textContent = `Demo：美國公債市場。每日殖利率曲線、利差與蝶式價差、實質殖利率與損益兩平通膨、ACM 期限溢酬，以及附息債標售與季度再融資（QRA）。資料至 ${fmtDate(DY[LD])}。`;
-document.getElementById('hd').textContent = `10 年期公債 ${f2(Y.T10Y[LD])}%，10 年減 2 年 ${sbp(S2_10[LD])} bp；ACM 10 年期限溢酬 ${sbp(TP10[tA] * 100)} bp`;
+document.getElementById('hd').textContent = `10 年期公債 ${f2(Y.T10Y[LD])}%，10 年減 2 年 ${sbp(S2_10[LD])} bp`;
 
 /* ---------- curve snapshots: latest, about a month and a year earlier (last trading day on or before) ---------- */
 const onOrBefore = s => { let j = -1; for (let t = 0; t <= LD; t++) if (DY[t] <= s && Y.T10Y[t] != null) j = t; return j; };
@@ -36,19 +35,19 @@ const SNAP = [['Latest', LD, '--c1', ''], ['1 month ago', onOrBefore(shift(DY[LD
   const back = k => lastOn(Y.T10Y, LD - k), m1 = SNAP[1] ? SNAP[1][1] : -1;
   const ch = (a, t) => t < 0 || a[LD] == null || a[t] == null ? null : (a[LD] - a[t]) * 100;
   const shape = S2_10[LD] < 0 ? '倒掛' : S2_10[LD] < 25 ? '接近平坦' : '正斜率';
-  let p = `<p>殖利率曲線：${fmtDate(DY[LD])} 2 年期 ${f2(Y.T2Y[LD])}%、5 年期 ${f2(Y.T5Y[LD])}%、10 年期 ${f2(Y.T10Y[LD])}%、30 年期 ${f2(Y.T30Y[LD])}%。一個月來 2 年期 ${sbp(ch(Y.T2Y, m1))} bp、10 年期 ${sbp(ch(Y.T10Y, m1))} bp、30 年期 ${sbp(ch(Y.T30Y, m1))} bp。10 年減 2 年 ${sbp(S2_10[LD])} bp（${shape}），10 年減 3 個月 ${sbp(S3M_10[LD])} bp，蝶式 ${sbp(FLY[LD])} bp。2 年期減 EFFR ${sbp(S2_EF[lastOn(S2_EF, LD)])} bp${S2_EF[lastOn(S2_EF, LD)] < -10 ? '：市場預期未來兩年降息' : S2_EF[lastOn(S2_EF, LD)] > 10 ? '：市場預期未來兩年升息' : '：市場預期政策利率大致持平'}。</p>`;
+  let p = `<p>殖利率曲線${shape}：10 年期 ${f2(Y.T10Y[LD])}%，10 年減 2 年 ${sbp(S2_10[LD])} bp。一個月來 2 年期 ${sbp(ch(Y.T2Y, m1))} bp、10 年期 ${sbp(ch(Y.T10Y, m1))} bp。2 年期減 EFFR ${sbp(S2_EF[lastOn(S2_EF, LD)])} bp${S2_EF[lastOn(S2_EF, LD)] < -10 ? '，市場預期未來兩年降息' : S2_EF[lastOn(S2_EF, LD)] > 10 ? '，市場預期未來兩年升息' : '，市場預期政策利率大致持平'}。</p>`;
   const tB = lastOn(BEI10, LD);
-  p += `<p>通膨與期限溢酬：10 年期實質殖利率 ${f2(R10[lastOn(R10, LD)])}%，10 年損益兩平通膨 ${f2(BEI10[tB])}%、5 年 ${f2(BEI5[lastOn(BEI5, LD)])}%、5 年後 5 年遠期 ${f2(F5Y5[lastOn(F5Y5, LD)])}%。ACM 模型（${fmtDate(DY[tA])}）把 10 年期殖利率 ${f2(ACMY[tA])}% 拆成預期短率平均 ${f2(ACMRN[tA])}% 與期限溢酬 ${sbp(TP10[tA] * 100)} bp；一年前期限溢酬為 ${sbp(at(TP10, lastOn(TP10, tA - 252)) * 100)} bp。</p>`;
+  p += `<p>通膨與期限溢酬：10 年損益兩平通膨 ${f2(BEI10[tB])}%，實質殖利率 ${f2(R10[lastOn(R10, LD)])}%。ACM 10 年期限溢酬 ${sbp(TP10[tA] * 100)} bp，一年前 ${sbp(at(TP10, lastOn(TP10, tA - 252)) * 100)} bp。</p>`;
   const done = AU.filter(a => a.btc != null && a.k !== 'FRN'), la = done[0];
   const rel = QRA[QRA.length - 1];
   if (la || rel) {
-    p += '<p>供給：';
+    p += '<p>';
     if (la) {
       const prev = done.filter(a => a.t === la.t && a.k === la.k && a.d < la.d).slice(0, 6), avg = f => prev.length ? prev.reduce((s, a) => s + (a[f] || 0), 0) / prev.length : null;
-      p += `最近一次已公布結果的附息債標售是 ${fmtDate(la.d)} 的 ${la.t}${la.k === 'TIPS' ? ' TIPS' : ''}${la.re ? '（增額）' : ''}，規模 ${fb(la.amt * 10)} 億美元，得標利率 ${la.y?.toFixed(3)}%，投標倍數 ${la.btc.toFixed(2)}（前 6 次平均 ${avg('btc')?.toFixed(2) ?? 'n.a.'}），初級交易商得標 ${la.pd?.toFixed(1)}%（平均 ${avg('pd')?.toFixed(1) ?? 'n.a.'}%）。`;
+      p += `最近標售：${fmtDate(la.d)} ${la.t}${la.k === 'TIPS' ? ' TIPS' : ''}${la.re ? '（增額）' : ''}，投標倍數 ${la.btc.toFixed(2)}（前 6 次平均 ${avg('btc')?.toFixed(2) ?? 'n.a.'}），交易商得標 ${la.pd?.toFixed(1)}%（平均 ${avg('pd')?.toFixed(1) ?? 'n.a.'}%）。`;
     }
     if (rel) {
-      const e = rel.est.map(x => `${x.q.replace('-', ' ')} ${x.v < 0 ? '償還' : '借'} ${fb(Math.abs(x.v) * 10)} 億美元（季末現金 ${fb(x.cash * 10)} 億）`).join('、');
+      const e = rel.est.map(x => `${x.q.replace('-', ' ')} ${x.v < 0 ? '償還' : '借'} ${fb(Math.abs(x.v) * 10)} 億美元`).join('、');
       p += `財政部 ${fmtDate(rel.date)} 的借款估計：${e}。`;
     }
     p += '</p>';
@@ -58,17 +57,18 @@ const SNAP = [['Latest', LD, '--c1', ''], ['1 month ago', onOrBefore(shift(DY[LD
 
 /* ---------- overview table ---------- */
 (function table() {
-  const rows = [['3-month bill', '%', Y.T3M, '%'], ['2-year', '%', Y.T2Y, '%'], ['5-year', '%', Y.T5Y, '%'], ['10-year', '%', Y.T10Y, '%'], ['30-year', '%', Y.T30Y, '%'],
-    ['10Y − 2Y', 'bp', S2_10, 'bp'], ['10Y − 3M', 'bp', S3M_10, 'bp'], ['30Y − 5Y', 'bp', S5_30, 'bp'], ['2s10s30s butterfly', 'bp', FLY, 'bp'], ['2Y − EFFR', 'bp', S2_EF, 'bp'],
-    ['10-year real (TIPS)', '%', R10, '%'], ['10-year breakeven', '%', BEI10, '%'], ['5-year breakeven', '%', BEI5, '%'], ['5y5y forward breakeven', '%', F5Y5, '%'],
-    ['ACM 10-year term premium', 'bp', TPB(TP10), 'bp'], ['ACM 10-year risk-neutral yield', '%', ACMRN, '%']];
+  const rows = [['殖利率，%'], ['3 個月國庫券', Y.T3M, '%'], ['2 年期', Y.T2Y, '%'], ['5 年期', Y.T5Y, '%'], ['10 年期', Y.T10Y, '%'], ['30 年期', Y.T30Y, '%'],
+    ['利差，bp'], ['10 年 − 2 年', S2_10, 'bp'], ['10 年 − 3 個月', S3M_10, 'bp'], ['30 年 − 5 年', S5_30, 'bp'], ['蝶式（2s10s30s）', FLY, 'bp'], ['2 年期 − EFFR', S2_EF, 'bp'],
+    ['通膨與期限溢酬'], ['10 年期實質殖利率（TIPS），%', R10, '%'], ['10 年損益兩平，%', BEI10, '%'], ['5 年損益兩平，%', BEI5, '%'], ['5 年後 5 年遠期損益兩平，%', F5Y5, '%'],
+    ['ACM 10 年期限溢酬，bp', TPB(TP10), 'bp'], ['ACM 10 年預期短率平均，%', ACMRN, '%']];
   const back = { '1 wk': 5, '1 mo': 21, '1 yr': 251 };
   let h = `<thead><tr class="grp"><th>Daily</th><th class="vl" colspan="2">Latest</th><th class="vl" colspan="3">Change (bp)</th><th class="vl">3 mo.</th></tr>
 <tr><th></th><th class="vl">Date</th><th>Value</th>${Object.keys(back).map((k, j) => `<th${j ? '' : ' class="vl"'}>${k}</th>`).join('')}<th class="vl"></th></tr></thead><tbody>`;
-  for (const [n, zh, a, u] of rows) {
+  for (const [n, a, u] of rows) {
+    if (!a) { h += `<tr class="gh"><td colspan="7">${n}</td></tr>`; continue; }
     const t = lastOn(a, LD); if (t < 0) continue;
     const mult = u === '%' ? 100 : 1;
-    h += `<tr><td>${n} <span class="note">${zh}</span></td><td class="vl note">${wlab(DY[t])}</td><td><b>${u === '%' ? f2(a[t]) : sbp(a[t])}</b></td>` +
+    h += `<tr><td>${n}</td><td class="vl note">${wlab(DY[t])}</td><td><b>${u === '%' ? f2(a[t]) : sbp(a[t])}</b></td>` +
       Object.values(back).map((k, j) => { const o = at(a, lastOn(a, t - k)); return `<td${j ? '' : ' class="vl"'}>${o == null ? 'n.a.' : sbp((a[t] - o) * mult)}</td>`; }).join('') +
       `<td class="vl" style="padding:2px 9px">${sparkline(a.slice(0, t + 1), 63, u === 'bp' ? 0 : null)}</td></tr>`;
   }

@@ -22,36 +22,38 @@ const B3_S = bp(B3M, SA90), B1_S = bp(B1M, SOFR), CPF3_B = bp(CPF3, B3M), CPA2_N
 const LD = Math.max(lastI(SOFR), lastI(EFFR)), tS = lastOn(SOFR, LD);
 
 document.getElementById('dt').textContent = `Daily to ${fmtDate(DY[LD])}`;
-document.getElementById('demo').textContent = `Demo：美元短期資金市場。隔夜利率（SOFR、TGCR、BGCR、EFFR）與聯準會管理利率、各種利差，以及 SOFR Averages、國庫券與商業本票的期限資金成本。資料至 ${fmtDate(DY[LD])}。`;
-document.getElementById('hd').textContent = `SOFR ${f2(SOFR[tS])}%，${S_IORB[tS] > 0 ? '高於' : S_IORB[tS] < 0 ? '低於' : '等於'} IORB ${Math.abs(S_IORB[tS])} bp；3 個月國庫券 ${f2(B3M[lastOn(B3M, LD)])}%`;
+document.getElementById('hd').textContent = `SOFR ${f2(SOFR[tS])}%，${S_IORB[tS] > 0 ? '高於' : S_IORB[tS] < 0 ? '低於' : '等於'} IORB ${Math.abs(S_IORB[tS])} bp`;
 
 // narrative: overnight, then term funding
 (function lede() {
   const avg = (a, t, n = 20) => { const x = a.slice(Math.max(0, t - n + 1), t + 1).filter(v => v != null); return x.length ? x.reduce((p, q) => p + q, 0) / x.length : null; };
-  const tE = lastOn(EFFR, LD), tT = lastOn(TGCR, LD), tB = lastOn(B3M, LD), tC = lastOn(CPF3, LD), tA = lastOn(CPA2, LD), t9 = lastOn(SA90, LD);
-  const se = avg(S_EFFR, tS), ti = avg(T_IORB, tT);
+  const se = avg(S_EFFR, tS);
   const lo = FFTL[lastOn(FFTL, LD)], hi = FFTU[lastOn(FFTU, LD)];
-  document.getElementById('mp1').innerHTML = `<p>隔夜：${fmtDate(DY[tS])} SOFR ${f2(SOFR[tS])}%、TGCR ${f2(TGCR[tT])}%、BGCR ${f2(BGCR[lastOn(BGCR, LD)])}%、EFFR ${f2(EFFR[tE])}%，聯邦資金目標區間 ${f2(lo)}–${f2(hi)}%，IORB ${f2(IORB[tS])}%。SOFR 減 EFFR 近 20 個交易日平均 ${sbp(se)} bp${se > 2 ? '：附買回利率高於銀行間拆款，擔保資金比無擔保資金緊' : se < -2 ? '：附買回利率低於銀行間拆款，擔保資金充裕' : '，兩個市場大致同步'}；TGCR 減 IORB 平均 ${sbp(ti)} bp。SOFR 交易量 ${fb(SOFRV[lastOn(SOFRV, LD)] * 10)} 億美元。</p>
-<p>期限資金：3 個月國庫券 ${f2(B3M[tB])}%，過去 90 天 SOFR 平均 ${f2(SA90[t9])}%；國庫券減 90 天 SOFR 平均為 ${sbp(B3_S[lastOn(B3_S, LD)])} bp${B3_S[lastOn(B3_S, LD)] > 10 ? '：前瞻的國庫券利率高於過去 90 天的實際短率，市場預期短率上升' : B3_S[lastOn(B3_S, LD)] < -10 ? '：前瞻的國庫券利率低於過去 90 天的實際短率，市場預期短率下降' : '：前瞻與過去的短率相近'}（國庫券另受供需影響）。3 個月 AA 金融商業本票 ${f2(CPF3[tC])}%，與國庫券的利差 ${sbp(CPF3_B[lastOn(CPF3_B, LD)])} bp；A2/P2 與 AA 非金融 1 個月本票利差 ${sbp(CPA2_N[lastOn(CPA2_N, LD)])} bp（${fmtDate(DY[tA])}），衡量信用較弱企業的額外資金成本。</p>`;
+  const hl = v => v == null ? 'n.a.' : `${v < 0 ? '低' : '高'} ${Math.abs(Math.round(v))} bp`;
+  const b3 = B3_S[lastOn(B3_S, LD)], view = b3 > 10 ? '市場預期短率上升' : b3 < -10 ? '市場預期短率下降' : '市場預期短率大致持平';
+  const pos = SOFR[tS] > IORB[tS] ? '高於準備金利率' : SOFR[tS] < IORB[tS] ? '低於準備金利率' : '貼著準備金利率';
+  document.getElementById('mp1').innerHTML = `<p>隔夜：SOFR ${f2(SOFR[tS])}% ${pos}，仍在目標區間 ${f2(lo)}–${f2(hi)}% 內。SOFR 減 EFFR 近 20 日平均 ${sbp(se)} bp${se > 2 ? '，附買回比銀行間拆款緊' : se < -2 ? '，附買回資金比銀行間充裕' : '，兩個市場大致同步'}。</p>
+<p>期限：${view}，3 個月國庫券比過去 90 天 SOFR 平均${hl(b3)}（國庫券另受供需影響）。信用溢價：AA 金融本票比國庫券${hl(CPF3_B[lastOn(CPF3_B, LD)])}，A2/P2 比 AA 非金融本票${hl(CPA2_N[lastOn(CPA2_N, LD)])}。</p>`;
 })();
 
 /* ---------- overview table ---------- */
 (function table() {
-  const rows = [['SOFR', '擔保隔夜融資利率', SOFR, '%'], ['TGCR', '三方附買回一般擔保', TGCR, '%'], ['BGCR', '廣義一般擔保', BGCR, '%'], ['EFFR', '有效聯邦資金利率', EFFR, '%'],
-    ['IORB', '準備金利率', IORB, '%'], ['ON RRP offering rate', '下限', RRPR, '%'], ['SRP rate', '常備附買回，上限', SRPR, '%'],
-    ['SOFR − IORB', 'bp', S_IORB, 'bp'], ['SOFR − EFFR', 'bp', S_EFFR, 'bp'], ['TGCR − BGCR', 'bp，三方 vs. 含 GCF', T_B, 'bp'],
-    ['SOFR 30-day average', 'SOFR Averages', SA30, '%'], ['SOFR 90-day average', '', SA90, '%'], ['SOFR 180-day average', '', SA180, '%'],
-    ['Treasury bill, 1 month', '國庫券', B1M, '%'], ['Treasury bill, 3 months', '', B3M, '%'], ['Treasury bill, 6 months', '', B6M, '%'],
-    ['Commercial paper, AA nonfinancial 1M', '商業本票', CPN1, '%'], ['Commercial paper, AA financial 3M', '', CPF3, '%'], ['Commercial paper, A2/P2 nonfinancial 30-day', '', CPA2, '%'],
-    ['3M bill − SOFR 90-day avg.', 'bp', B3_S, 'bp'], ['3M AA financial CP − 3M bill', 'bp', CPF3_B, 'bp'], ['A2/P2 − AA nonfinancial CP, 1M', 'bp', CPA2_N, 'bp'],
-    ['SOFR volume', '$ bn', SOFRV, '$'], ['EFFR volume', '$ bn', EFFRV, '$']];
+  const rows = [['隔夜利率，%'], ['SOFR', SOFR, '%'], ['TGCR', TGCR, '%'], ['BGCR', BGCR, '%'], ['EFFR', EFFR, '%'],
+    ['IORB', IORB, '%'], ['ON RRP 利率（下限）', RRPR, '%'], ['SRP 利率（上限）', SRPR, '%'],
+    ['利差，bp'], ['SOFR − IORB', S_IORB, 'bp'], ['SOFR − EFFR', S_EFFR, 'bp'], ['TGCR − BGCR', T_B, 'bp'],
+    ['期限利率，%'], ['SOFR 30 天平均', SA30, '%'], ['SOFR 90 天平均', SA90, '%'], ['SOFR 180 天平均', SA180, '%'],
+    ['1 個月國庫券', B1M, '%'], ['3 個月國庫券', B3M, '%'], ['6 個月國庫券', B6M, '%'],
+    ['AA 非金融本票 1 個月', CPN1, '%'], ['AA 金融本票 3 個月', CPF3, '%'], ['A2/P2 非金融本票 30 天', CPA2, '%'],
+    ['期限利差，bp'], ['3 個月國庫券 − SOFR 90 天平均', B3_S, 'bp'], ['AA 金融本票 − 國庫券，3 個月', CPF3_B, 'bp'], ['A2/P2 − AA 非金融本票，1 個月', CPA2_N, 'bp'],
+    ['交易量，$ bn'], ['SOFR', SOFRV, '$'], ['EFFR', EFFRV, '$']];
   const back = { '1 wk': 5, '1 mo': 21, '1 yr': 252 };
   let h = `<thead><tr class="grp"><th>Daily</th><th class="vl" colspan="2">Latest</th><th class="vl" colspan="3">Earlier</th><th class="vl">3 mo.</th></tr>
 <tr><th></th><th class="vl">Date</th><th>Value</th>${Object.keys(back).map((k, j) => `<th${j ? '' : ' class="vl"'}>${k} ago</th>`).join('')}<th class="vl"></th></tr></thead><tbody>`;
-  for (const [n, zh, a, u] of rows) {
+  for (const [n, a, u] of rows) {
+    if (!a) { h += `<tr class="gh"><td colspan="7">${n}</td></tr>`; continue; }
     const t = lastOn(a, LD); if (t < 0) continue;
     const fm = u === '%' ? f2 : u === 'bp' ? sbp : fb;
-    h += `<tr><td>${n} <span class="note">${zh}</span></td><td class="vl note">${wlab(DY[t])}</td><td><b>${fm(a[t])}</b></td>` +
+    h += `<tr><td>${n}</td><td class="vl note">${wlab(DY[t])}</td><td><b>${fm(a[t])}</b></td>` +
       Object.values(back).map((k, j) => `<td${j ? '' : ' class="vl"'}>${fm(at(a, lastOn(a, t - k)))}</td>`).join('') + `<td class="vl" style="padding:2px 9px">${sparkline(a.slice(0, t + 1), 63, u === 'bp' ? 0 : null)}</td></tr>`;
   }
   document.getElementById('mt').innerHTML = h + '</tbody>';

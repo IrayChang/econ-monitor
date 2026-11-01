@@ -1,7 +1,6 @@
 mount('tpl-ov');
 (function () {
 const DS = window.ALL_DATA, DSK = 'overview', M = [];
-document.getElementById('demo').textContent = '總覽：先看各面向的方向與關鍵指標，再看 19 個指標的完整表格與小圖。點卡片、表格列或小圖可進入各分頁。';
 document.getElementById('ovdt').textContent = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).replace(',', '');
 const SEM = {bad:'230,103,103', good:'25,158,112', cool:'57,135,229'};
 function semHeat(v,cap,kind,amax){ if(v==null) return 'transparent'; const x=Math.max(-1,Math.min(1,v/cap)), a=(Math.abs(x)*(amax||0.5)).toFixed(3);
