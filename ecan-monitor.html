@@ -161,16 +161,31 @@
   <div id="ovapp">
   <div class="toolbar"><span class="status" id="status"></span></div><div class="tip" id="tip" hidden></div>
 <div id="appOv">
+<section class="ovsec" aria-labelledby="oVerT">
+  <div class="ovsh"><h2 id="oVerT">各面向一覽</h2><span class="hint">依趨勢線近 6 個月（GDP 為近 2 季）的方向。紅＝朝不利方向、綠＝朝有利方向、灰＝持平或中性。點卡片跳到該組的小圖</span></div>
+  <div class="verd" id="oVerd"></div>
+</section>
+<section class="ovsec" aria-labelledby="oKpiT">
+  <div class="ovsh"><h2 id="oKpiT">關鍵指標</h2><span class="hint">大字是趨勢線，下方是最新單期；點卡片前往該分頁</span></div>
+  <div class="kgrid" id="oKpi"></div>
+</section>
 <div class="ovtop">
-  <section class="summary" aria-labelledby="oSumT">
-    <div class="ph"><h2 id="oSumT">Trend summary</h2><span class="hint">看方向，不看單月：依各指標的趨勢線自動產生</span></div>
-    <ul id="oSumList"></ul>
+  <section class="panel" aria-labelledby="oInT">
+    <div class="ph"><h2 id="oInT">Inflation trend</h2><span class="hint">年增率；虛線是 2% 目標</span>
+      <div class="seg" id="oInR" role="group" aria-label="期間"></div><div class="seg" id="oInV" role="group" aria-label="檢視"><button type="button" data-v="c">圖</button><button type="button" data-v="t">表</button></div></div>
+    <div class="chartbox" id="oInC"></div>
+    <div class="tblw" id="oInTb" hidden></div>
+    <div class="legend" id="oInL"></div>
   </section>
   <section class="panel">
     <div class="ph"><h2>Calendar</h2><span class="hint" id="ocHint"></span></div>
     <div class="tw" id="ocTbl"></div>
   </section>
 </div>
+<details class="summary" id="oSum">
+  <summary class="ph"><h2 id="oSumT">Trend summary</h2><span class="hint">文字版：各面向逐項說明，點此展開</span></summary>
+  <ul id="oSumList"></ul>
+</details>
 
 <section class="panel wide">
   <div class="ph">

@@ -1,7 +1,7 @@
 mount('tpl-ov');
 (function () {
 const DS = window.ALL_DATA, DSK = 'overview', M = [];
-document.getElementById('demo').textContent = '總覽：19 個指標的趨勢與行事曆。點表格列或小圖可進入各資料的 brief 頁。';
+document.getElementById('demo').textContent = '總覽：先看各面向的方向與關鍵指標，再看 19 個指標的完整表格與小圖。點卡片、表格列或小圖可進入各分頁。';
 document.getElementById('ovdt').textContent = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).replace(',', '');
 const SEM = {bad:'230,103,103', good:'25,158,112', cool:'57,135,229'};
 function semHeat(v,cap,kind,amax){ if(v==null) return 'transparent'; const x=Math.max(-1,Math.min(1,v/cap)), a=(Math.abs(x)*(amax||0.5)).toFixed(3);
@@ -260,7 +260,7 @@ function idx(ind){ const k=RANGES.find(x=>x[0]===state.range)[1], tt=Math.max(la
   const T=[]; for(let t=s;t<=tt;t++) T.push(t); return T; }
 function renderGrid(){
   let h='';
-  GROUPS.forEach(([g,z,en])=>{ h+=`<div class="ovg"><div class="ovgh">${en} <span>${z}</span></div><div class="ovgrid">`;
+  GROUPS.forEach(([g,z,en])=>{ h+=`<div class="ovg" id="ovg_${g}"><div class="ovgh">${en} <span>${z}</span></div><div class="ovgrid">`;
     IND.filter(i=>i.g===g).forEach(ind=>{ const r=read(ind); h+=`<div class="ovc" data-src="${ind.src}"><div class="ovch"><span class="ovn">${esc(ind.n)}</span><span class="ovd" style="color:${mc(ind,r.dir)}">${dirLab(r)}</span></div>
       <div class="ovcv"><b>${val(ind,ind.trend[r.tt])}</b><span>${ind.tl} · ${r.perT?lab(r.perT):''}</span><span>${ind.fl} ${val(ind,ind.fast[r.tf])}</span></div><div class="chartbox" id="ovc_${ind.id}"></div></div>`; });
     h+='</div></div>'; });
@@ -285,11 +285,59 @@ function renderSum(){
   $('#oSumList').innerHTML=o.map(s=>`<li>${s}</li>`).join('');
 }
 
+/* ---------- at a glance: one card per area, then headline indicator cards ---------- */
+const AGENCY = {cpi:'BLS',ppi:'BLS',nfp:'BLS',pce:'BEA',gdp:'BEA',retail:'Census',ism:'ISM',spgi:'S&P Global',pulse:'DOL'};
+const ICON = {up:'<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3l5 6H9.5v4h-3V9H3z" fill="currentColor"/></svg>',
+  down:'<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13L3 7h3.5V3h3v4H13z" fill="currentColor"/></svg>',
+  flat:'<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h9M8 4.5L11.5 8 8 11.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'};
+// tone of a trend move under the page's rule set: bad / good / flat (wages and no-change count as flat)
+const tone = (ind,r) => !r.dir||!ind.good ? 'flat' : r.dir*ind.good>0 ? 'good' : 'bad';
+const TONE = {bad:'不利',good:'有利',flat:'持平'};
+function renderVerd(){
+  $('#oVerd').innerHTML=GROUPS.map(([g,z])=>{ const L=IND.filter(i=>i.g===g).map(ind=>tone(ind,read(ind))), n={bad:0,good:0,flat:0}; L.forEach(t=>n[t]++);
+    const head=n.bad>n.good?'偏向不利':n.good>n.bad?'偏向有利':'大致持平';
+    return `<button type="button" class="vd" data-g="${g}"><span class="t">${z}：${head}</span><span class="s">${L.length} 項中 ${n.bad} 項不利、${n.good} 項有利、${n.flat} 項持平</span>
+      <span class="vbar" aria-hidden="true">${['bad','good','flat'].filter(k=>n[k]).map(k=>`<i class="${k}" style="flex:${n[k]}"></i>`).join('')}</span></button>`; }).join('');
+  $('#oVerd').querySelectorAll('.vd').forEach(b=>b.onclick=()=>$('#ovg_'+b.dataset.g).scrollIntoView());
+}
+const KPI = ['gdp','ctrl','ism_m','ism_s','pce','cpi','shl','ppi','ur','nfp','icl','ahe'];
+function renderKpi(){
+  const cal=calendar();
+  $('#oKpi').innerHTML=KPI.map(id=>{ const ind=IND.find(i=>i.id===id), r=read(ind), t=tone(ind,r), dk=r.dir>0?'up':r.dir<0?'down':'flat';
+    const word=r.dir==null?'—':r.dir>0?'上升':r.dir<0?'下降':'持平', nx=cal.find(x=>x.src===ind.src&&x.d>=TODAY), big=val(ind,ind.trend[r.tt]);
+    const z=GROUPS.find(x=>x[0]===ind.g)[1], ch=r.d==null?'':`近 ${ind.q?'2 季':'6 個月'} ${sg(+r.d.toFixed(ind.d)||0,ind.d)}${ind.u==='k'?'k':''}`;
+    return `<button type="button" class="kc" data-src="${ind.src}" aria-label="${esc(`${ind.n} ${ind.tl} ${big}，趨勢${word}，${TONE[t]}，${ch}`)}">
+      <span class="kg">${z}</span><span class="kh"><span class="kn">${esc(ind.n.replace(/（.*）/,''))}</span><span class="ke">${ind.tl}</span></span>
+      <span class="kbig">${big.replace(/(%|k)$/,'<i>$1</i>')}</span>
+      <span class="kd ${t}">${ICON[dk]}<b>${word}</b><span>${ch}</span></span>
+      <span class="ks">${ind.fl} ${val(ind,ind.fast[r.tf])} · ${r.per?lab(r.per):''}</span>
+      ${spark(ind)}
+      <span class="kf"><span>${AGENCY[ind.src]||''}</span><span>${nx?'下次 '+dzh(nx.d):''}</span></span></button>`; }).join('');
+  $('#oKpi').querySelectorAll('.kc').forEach(b=>b.onclick=()=>{ location.hash=b.dataset.src; });
+}
+/* inflation trend: headline CPI, core CPI and core PCE y/y on one chart, with a table view */
+const CPIn = ser('cpi','All items','nsa');
+const INFL = [{n:'CPI',a:yoyA(CPIn),c:'var(--muted)',w:1.6},{n:'核心 CPI',a:yoyA(CPICn),c:'var(--up)',w:2,dash:1},{n:'核心 PCE',a:yoyA(PCEC),c:'var(--amber)',w:2.6}];
+const inState = {r:'5Y', v:'c'};
+function renderInfl(){
+  const k=RANGES.find(x=>x[0]===inState.r)[1], tt=Math.max(...INFL.map(l=>last(l.a))); let s=k==null?0:Math.max(0,tt-k+1);
+  while(s<tt&&INFL.every(l=>l.a[s]==null)) s++;
+  const T=[]; for(let t=s;t<=tt;t++) T.push(t);
+  $('#oInR').innerHTML=['2Y','5Y','MAX'].map(r=>`<button type="button" data-r="${r}" aria-pressed="${inState.r===r}">${r}</button>`).join('');
+  $('#oInR').querySelectorAll('button').forEach(b=>b.onclick=()=>{ inState.r=b.dataset.r; renderInfl(); });
+  $('#oInV').querySelectorAll('button').forEach(b=>{ b.setAttribute('aria-pressed',b.dataset.v===inState.v); b.onclick=()=>{ inState.v=b.dataset.v; renderInfl(); }; });
+  $('#oInC').hidden=inState.v!=='c'; $('#oInTb').hidden=inState.v!=='t';
+  lineChart($('#oInC'),{P:MO,T,W:760,H:300,title:'通膨年增率',d:1,unit:'%',lines:INFL,refs:[{v:2,c:'var(--cmd)',lab:'目標 2%'}],legend:$('#oInL')});
+  const rows=T.slice(-Math.min(T.length,24)).reverse();
+  $('#oInTb').innerHTML=`<table><thead><tr><th>月份</th>${INFL.map(l=>`<th>${l.n}</th>`).join('')}</tr></thead><tbody>${rows.map(t=>`<tr><td class="nm">${lab(MO[t])}</td>${INFL.map(l=>`<td>${l.a[t]==null?'—':fx(l.a[t],1)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+}
+
 function renderToolbar(){
   const lt=k=>{ const d=DS[k]; if(!d) return '—'; const p=d.hist.quarters?GQ[last(GS('gdp'))]:d.hist.months.at(-1); return lab(p); };
   $('#status').innerHTML=`資料截至：CPI <b>${lt('cpi')}</b> · PCE <b>${lt('pce')}</b> · NFP <b>${lt('nfp')}</b> · ISM <b>${lt('ism')}</b> · S&P <b>${lt('spgi')}</b> · 零售 <b>${lt('retail')}</b> · GDP <b>${lt('gdp')}</b>`;
 }
 $('#appOv').hidden=false;
-renderToolbar(); renderSum(); renderCal(); renderTbl(); renderGrid();
+document.querySelector('.wrap').classList.add('wide');
+renderToolbar(); renderVerd(); renderKpi(); renderInfl(); renderSum(); renderCal(); renderTbl(); renderGrid();
 
 })();
