@@ -1,20 +1,20 @@
 :root{
-  --bg:#f3f1ec; --paper:#fbfaf7; --ink:#3b3936; --muted:#77726a; --rule:#dfdad1;
-  --brand:#4f6474; --chip:#ebe7df; --hl:#efebe3;
+  --bg:#f3f1ec; --paper:#fbfaf7; --ink:#3b3936; --muted:#625d56; --rule:#dfdad1;
+  --brand:#4f6474; --chip:#ebe7df; --hl:#efebe3; --rd:#9c5b44; --bl:#4f6b85;
   --c1:#5e7b91; --c2:#b5715a; --c3:#7b9473; --c4:#8c7aa0;
   --axis:#5f5a53; --grid:#e8e4dc; --frame:#aaa49a; --shade:#ebe7df;
   --k0:#5e7b91; --k1:#b5715a; --k2:#7b9473; --k3:#8c7aa0; --k4:#c19d58; --k5:#5f938e; --k6:#ae7b8c; --k7:#9a9488; --k8:#8a6d58; --k9:#8eaac2; --kx:#d4cfc5; --tot:#2f2d2a;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#1d1c1a; --paper:#262523; --ink:#e9e5dd; --muted:#aaa497; --rule:#3a3834;
-  --brand:#aec0ce; --chip:#302e2b; --hl:#2e2c29;
+  --brand:#aec0ce; --chip:#302e2b; --hl:#2e2c29; --rd:#d49c86; --bl:#93acc2;
   --c1:#93acc2; --c2:#d49c86; --c3:#a6bb9c; --c4:#b7a5c9;
   --axis:#bdb7ab; --grid:#302e2b; --frame:#5a5650; --shade:#2e2c29;
   --k0:#93acc2; --k1:#d49c86; --k2:#a6bb9c; --k3:#b7a5c9; --k4:#d8bd84; --k5:#8fbdb7; --k6:#cfa1b1; --k7:#b4aea2; --k8:#bf9e86; --k9:#b6cde0; --kx:#4a4743; --tot:#f2efe9;
 }}
 :root[data-theme="dark"]{
   --bg:#1d1c1a; --paper:#262523; --ink:#e9e5dd; --muted:#aaa497; --rule:#3a3834;
-  --brand:#aec0ce; --chip:#302e2b; --hl:#2e2c29;
+  --brand:#aec0ce; --chip:#302e2b; --hl:#2e2c29; --rd:#d49c86; --bl:#93acc2;
   --c1:#93acc2; --c2:#d49c86; --c3:#a6bb9c; --c4:#b7a5c9;
   --axis:#bdb7ab; --grid:#302e2b; --frame:#5a5650; --shade:#2e2c29;
   --k0:#93acc2; --k1:#d49c86; --k2:#a6bb9c; --k3:#b7a5c9; --k4:#d8bd84; --k5:#8fbdb7; --k6:#cfa1b1; --k7:#b4aea2; --k8:#bf9e86; --k9:#b6cde0; --kx:#4a4743; --tot:#f2efe9;
@@ -181,6 +181,6 @@ body.side-on .sideopen{display:none}
 /* Treasury curve table beside the curve chart */
 .curvet{align-self:start}
 .curvet table{width:100%}
-.curvet td.up{color:var(--c2)}
-.curvet td.dn{color:var(--c1)}
+.curvet td.up{color:var(--rd)}
+.curvet td.dn{color:var(--bl)}
 .curvet .note{margin:6px 0 0}

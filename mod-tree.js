@@ -445,8 +445,9 @@ if (!IT[STK.node] || !stackKids(STK.node).length) STK.node = IDX[A];
 const KC = i => `--k${i % 10}`;
 function drawStack() {
   const el = document.getElementById('stk');
+  refit(el, drawStack);
   const { tot, cats, other } = contrib(STK.node, STK.m);
-  const narrow = el.clientWidth < 560, W = narrow ? 460 : 900, H = narrow ? 340 : 360, x0 = 40, x1 = W - 40, y0 = 50, y1 = H - 46;
+  const narrow = el.clientWidth < 560, W = fitW(el, narrow ? 460 : 900), H = narrow ? 340 : 360, x0 = 40, x1 = W - 40, y0 = 50, y1 = H - 46;
   const ft = tot.findIndex(v => v != null), s = Math.min(L, rangeStart(STK.r, Math.max(ft < 0 ? 0 : ft, LAG[STK.m]))), e = L, n = e - s, xw = (x1 - x0) / (n + 1);
   const X = i => x0 + (i - s + 0.5) * xw;
   const segs = [...cats.filter(c => c.v.some(v => v != null)).map((c, k) => ({ ...c, c: KC(k), name: nm(c.i) })), { i: -1, v: other, c: '--kx', name: 'Other / residual' }];
@@ -481,7 +482,7 @@ function drawStack() {
   // x axis
   for (let t = s; t <= e; t++) if (M[t].endsWith('-01')) g += `<line x1="${X(t) - xw / 2}" x2="${X(t) - xw / 2}" y1="${y1}" y2="${y1 + 5}" stroke="${css('--axis')}"/>`;
   if (n < 30) for (let t = s; t <= e; t++) { const mo = +M[t].slice(5);
-    if (n < 12 || (mo - 1) % 3 === 0) g += `<text x="${X(t)}" y="${y1 + 14}" font-size="9.5" text-anchor="middle">${MON[mo - 1]}</text>`;
+    if (n < 12 || (mo - 1) % 3 === 0) g += `<text x="${X(t)}" y="${y1 + 14}" font-size="10" text-anchor="middle">${MON[mo - 1]}</text>`;
     if (mo === 1 || (t === s && (mo < 10 || n < 12))) g += `<text x="${X(t)}" y="${y1 + 27}" font-size="10" font-weight="700" text-anchor="${t === s ? 'start' : 'middle'}">${M[t].slice(0, 4)}</text>`; }
   else [...new Set(M.slice(s, e + 1).map(m => m.slice(0, 4)))].forEach(yr => {
     const idx = []; for (let t = s; t <= e; t++) if (M[t].startsWith(yr)) idx.push(t);
@@ -490,7 +491,7 @@ function drawStack() {
   const title = `Contributions to ${STK.node === IDX[A] ? K.long : K.tab + ': ' + nm(STK.node)}`;
   g += `<text x="${W / 2}" y="16" font-size="12.5" text-anchor="middle" style="fill:${css('--ink')}">${esc(title)}</text>`;
   g += `<text x="${W / 2}" y="31" font-size="11" text-anchor="middle" style="fill:${css('--ink')}">${MEAS[STK.m].sub}${MEAS[STK.m].add ? '' : ', Percentage Points'}</text>`;
-  g += `<text x="${x0 - 30}" y="${H - 4}" font-size="9.5">Source:  ${K.src}${narrow ? '' : KIND === 'nfp' ? '; contributions are job changes by industry' : KIND === 'retail' ? '; contributions from sales shares' : HASWH ? '; contributions from nominal shares' : '; contributions estimated from relative importance'}</text>`;
+  g += `<text x="${x0 - 30}" y="${H - 4}" font-size="10">Source:  ${K.src}${narrow ? '' : KIND === 'nfp' ? '; contributions are job changes by industry' : KIND === 'retail' ? '; contributions from sales shares' : HASWH ? '; contributions from nominal shares' : '; contributions estimated from relative importance'}</text>`;
   g += `<line class="xh" y1="${y0}" y2="${y1}" stroke="${css('--axis')}" stroke-width=".6" visibility="hidden"/>`;
   el.innerHTML = `<div class="plot"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(title)}">${g}</svg><div class="tip"></div></div><div class="tb"></div>`;
   // toolbar: breadcrumb, measure, range, legend
@@ -594,15 +595,16 @@ if (D.disp) (function breadth() {
     const col = hm === 'y12' ? 1 : 2, bins = LBL.map(() => []);
     for (const c of P.comps) { const v = c[col]; if (v == null) continue; const k = EDG.findIndex((e, j) => v >= e && v < EDG[j + 1]); bins[k].push(c); }
     const tot = bins.reduce((a, b) => a + b.length, 0), pct = bins.map(b => b.length / tot * 100);
-    const W = 460, H = 330, x0 = 40, x1 = W - 40, y0 = 50, y1 = H - 46, bw = (x1 - x0) / LBL.length;
+    const plot = hEl.querySelector('.plot'); refit(plot, drawHist);
+    const W = fitW(plot, 460), H = 330, x0 = 40, x1 = W - 40, y0 = 50, y1 = H - 46, bw = (x1 - x0) / LBL.length;
     const ax = nice(0, Math.max(...pct), 5), Yv = v => y1 - v / ax.hi * (y1 - y0);
     let g = '';
     for (let v = 0; v <= ax.hi + 1e-9; v += ax.step) g += `<line x1="${x0}" x2="${x1}" y1="${Yv(v)}" y2="${Yv(v)}" stroke="${css('--grid')}"/><text x="${x0 - 5}" y="${Yv(v) + 3.5}" font-size="10" text-anchor="end">${fmtT(v, ax.step)}</text><text x="${x1 + 5}" y="${Yv(v) + 3.5}" font-size="10">${fmtT(v, ax.step)}</text>`;
     pct.forEach((p, k) => {
       const x = x0 + k * bw, hot = EDG[k] >= thr, fade = sel != null && sel !== k ? ' opacity=".35"' : '';
       g += `<rect class="bin" data-k="${k}" x="${x + bw * 0.12}" y="${Yv(p)}" width="${bw * 0.76}" height="${y1 - Yv(p)}" fill="${css(hot ? '--c2' : '--c1')}"${fade}/>`;
-      g += `<text x="${x + bw / 2}" y="${Yv(p) - 4}" font-size="9.5" text-anchor="middle">${p.toFixed(0)}</text>`;
-      g += `<text x="${x + bw / 2}" y="${y1 + 14}" font-size="9" text-anchor="middle">${LBL[k]}</text>`;
+      g += `<text x="${x + bw / 2}" y="${Yv(p) - 4}" font-size="10" text-anchor="middle">${p.toFixed(0)}</text>`;
+      g += `<text x="${x + bw / 2}" y="${y1 + 14}" font-size="10" text-anchor="middle">${LBL[k]}</text>`;
     });
     const xt = x0 + 5 * bw;
     g += `<line x1="${xt}" x2="${xt}" y1="${y0}" y2="${y1}" stroke="${css('--axis')}" stroke-dasharray="3 3"/><text x="${xt + 4}" y="${y0 + 12}" font-size="10" style="fill:${css('--c2')}">Above ${thr}%: ${(pct.slice(5).reduce((a, b) => a + b, 0)).toFixed(0)}%</text>`;
@@ -611,7 +613,7 @@ if (D.disp) (function breadth() {
     g += `<rect x="${x0}" y="${y0}" width="${x1 - x0}" height="${y1 - y0}" fill="none" stroke="${css('--frame')}" stroke-width=".8"/>`;
     g += `<text x="${W / 2}" y="16" font-size="12.5" text-anchor="middle" style="fill:${css('--ink')}">PCE Components by Price Change, ${mlab(BM[BL])} ${BM[BL].slice(0, 4)}</text>`;
     g += `<text x="${W / 2}" y="31" font-size="11" text-anchor="middle" style="fill:${css('--ink')}">% of ${tot} Components, ${hm === 'y12' ? '12-Mo. % Change' : '6-Mo. % Change, Annualized'}</text>`;
-    g += `<text x="${x0 - 30}" y="${H - 4}" font-size="9.5">Source:  Bureau of Economic Analysis</text>`;
+    g += `<text x="${x0 - 30}" y="${H - 4}" font-size="10">Source:  Bureau of Economic Analysis</text>`;
     hEl.querySelector('.plot').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Distribution of PCE component price changes">${g}</svg><div class="tip"></div>`;
     hEl.querySelector('.tb').innerHTML = `<span class="seg" role="group" aria-label="Horizon">${[['y12', '12M'], ['a6', '6M ann.']].map(([k, l]) => `<button type="button" data-h="${k}" aria-pressed="${k === hm}">${l}</button>`).join('')}</span><span class="note">點長條看該區間的細項</span>`;
     const svg = hEl.querySelector('svg'), tip = hEl.querySelector('.tip');
@@ -664,6 +666,4 @@ for (const id in DEF) chart(id, DEF[id]);
 const s5 = store.get('ch5'); if (s5 && s5.ids[0]) selI = s5.ids[0].i;
 drawTable();
 drawStack();
-let rzT, lastW = innerWidth < 600;
-addEventListener('resize', () => { clearTimeout(rzT); rzT = setTimeout(() => { const nw = innerWidth < 600; if (nw !== lastW) { lastW = nw; CH.ch5.draw(); drawStack(); } }, 150); });
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { for (const k in CH) CH[k].draw(); drawStack(); BREADTH_REDRAW && BREADTH_REDRAW(); });

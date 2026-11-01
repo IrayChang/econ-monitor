@@ -66,7 +66,8 @@ const UI = (()=>{
 
   /* line chart. o: {P (period labels), T (indexes), lines:[{n,a,c,w,dash}], W,H, unit, d (decimals), refs:[{v,c,lab}], zero, title, tipT(t), legend el} */
   function lineChart(el,o){
-    const W=o.W||680, H=o.H||270, P={l:46,r:14,t:14,b:30}, T=o.T, per=o.P;
+    refit(el,()=>lineChart(el,o));
+    const W=fitW(el,o.W||680), H=o.H||270, P={l:46,r:14,t:14,b:30}, T=o.T, per=o.P;
     const vals=o.lines.flatMap(l=>T.map(t=>l.a[t]).filter(v=>v!=null)).concat((o.refs||[]).map(r=>r.v));
     if(!o.lines.some(l=>T.some(t=>l.a[t]!=null))){ el.innerHTML='<div class="empty">這個區間沒有資料。</div>'; if(o.legend) o.legend.innerHTML=''; return; }
     const sc=scale(vals,6,o.zero), {Y,s:g}=yAxis(W,P,H,sc,o.unit,o.zeroAt), X=i=>T.length===1?(P.l+W-P.r)/2:P.l+i/(T.length-1)*(W-P.l-P.r);
@@ -84,7 +85,8 @@ const UI = (()=>{
 
   /* bar chart: stacked (signed) or grouped. o: {P,T,series:[{n,a,c}],stack,total:{n,a,c},W,H,unit,d,title,tipT,ghost:{i,v,c,lab}} */
   function barChart(el,o){
-    const W=o.W||760, H=o.H||300, P={l:46,r:14,t:16,b:30}, T=o.T, per=o.P, S=o.series;
+    refit(el,()=>barChart(el,o));
+    const W=fitW(el,o.W||760), H=o.H||300, P={l:46,r:14,t:16,b:30}, T=o.T, per=o.P, S=o.series;
     const vals=[0]; T.forEach(t=>{ if(o.stack){ let p=0,n=0; S.forEach(x=>{ const v=x.a[t]; if(v>0)p+=v; else if(v<0)n+=v; }); vals.push(p,n); } else S.forEach(x=>{ if(x.a[t]!=null) vals.push(x.a[t]); }); if(o.total&&o.total.a[t]!=null) vals.push(o.total.a[t]); });
     if(o.ghost) vals.push(o.ghost.v);
     const sc=scale(vals,6,true), {Y,s:g}=yAxis(W,P,H,sc,o.unit), n=T.length+(o.ghost?1:0), slot=(W-P.l-P.r)/n, X=i=>P.l+slot*(i+0.5);

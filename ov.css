@@ -79,8 +79,8 @@
 #ovapp td.na{color:var(--dim)}
 #ovapp .ls{font-size:10.5px;color:var(--muted);text-align:left}
 #ovapp .ls b{font-weight:600}
-#ovapp .ls .L{color:var(--up)}
-#ovapp .ls .S{color:var(--down)}
+#ovapp .ls .L{color:var(--bad)}
+#ovapp .ls .S{color:var(--cool)}
 #ovapp .ls .ever{background:var(--cmd);color:var(--amber-ink);padding:0 3px;font-weight:600}
 #ovapp .det{padding:10px 12px;display:flex;flex-direction:column;gap:10px}
 #ovapp .det h3{margin:0;font-size:16px;font-weight:600;text-wrap:balance}
@@ -115,8 +115,8 @@
 #ovapp .tip .tg{display:grid;grid-template-columns:auto auto;gap:3px 18px;margin:0;font-family:var(--f-zh)}
 #ovapp .tip .tg dt{color:var(--muted)}
 #ovapp .tip .tg dd{margin:0;text-align:right;font-family:var(--f-data);font-variant-numeric:tabular-nums;color:var(--fg)}
-#ovapp .tip .tg dd.up{color:var(--up)}
-#ovapp .tip .tg dd.dn{color:var(--down)}
+#ovapp .tip .tg dd.up{color:var(--bad)}
+#ovapp .tip .tg dd.dn{color:var(--cool)}
 #ovapp .tip .tf{margin-top:6px;padding-top:5px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;font-family:var(--f-zh)}
 #ovapp .legend{display:flex;flex-wrap:wrap;gap:4px 12px;padding:6px 8px;font-size:11px;color:var(--muted);border-top:1px solid var(--line)}
 #ovapp .legend span{display:inline-flex;align-items:center;gap:5px}
@@ -166,7 +166,7 @@
 #ovapp .summary .sumMore{margin-left:auto}
 #ovapp .chartbox svg{touch-action:pan-y}
 #ovapp .gapr{fill:var(--fg);fill-opacity:.045;stroke:var(--line);stroke-dasharray:3 3}
-#ovapp .gapt{fill:var(--dim);font-size:9.5px}
+#ovapp .gapt{fill:var(--dim);font-size:10px}
 #ovapp .crule{display:inline-flex;flex-wrap:wrap;gap:4px 12px;margin-left:auto;font-family:var(--f-zh);font-size:11px;color:var(--muted)}
 #ovapp .crule span{display:inline-flex;align-items:center;gap:5px}
 #ovapp .crule i{display:inline-block;width:10px;height:10px}
@@ -192,7 +192,7 @@
 #ovapp .summary ul,#ovapp .guide ol{margin:0;padding:10px 14px 12px 30px;display:grid;gap:7px;font-family:var(--f-zh);font-size:13.5px;line-height:1.65}
 #ovapp .summary li::marker,#ovapp .guide li::marker{color:var(--amber)}
 #ovapp .summary b,#ovapp .guide b{color:var(--amber);font-weight:500}
-#ovapp .summary .u{color:var(--up)}
+#ovapp .summary .u{color:var(--bad)}
 #ovapp .guide{margin-top:16px;border:1px solid var(--line);background:var(--panel);max-width:120ch}
 #ovapp .guide code{font-family:var(--f-data);font-size:12px;background:var(--bg);border:1px solid var(--line);padding:1px 5px;color:var(--cmd);word-break:break-all}
 #ovapp .guide ol{grid-template-columns:minmax(0,1fr)}
@@ -280,9 +280,9 @@
 #ovapp .key[data-k]{cursor:pointer}
 #ovapp button:disabled{opacity:.4;cursor:not-allowed}
 /* brief theme for the ported overview */
-#ovapp{color-scheme:light;--bg:#f3f1ec;--panel:#fbfaf7;--panel-2:#f5f2ec;--line:#dfdad1;--fg:#3b3936;--muted:#77726a;--dim:#9a948a;--amber:#4f6474;--amber-ink:#ffffff;--cmd:#5e7b91;--sel:#efebe3;--up:#b5715a;--down:#5e7b91;--mid:#d4cfc5;--good:#7b9473;--k1:#5e7b91;--k2:#b5715a;--k3:#7b9473;--k-other:#d4cfc5;--f-data:"Inter","Noto Sans TC",sans-serif;--f-ui:"Inter","Noto Sans TC","PingFang TC",system-ui,sans-serif;--f-zh:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;background:transparent;padding:0;font-size:13.5px}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #ovapp{color-scheme:dark;--bg:#1d1c1a;--panel:#262523;--panel-2:#2c2b28;--line:#3a3834;--fg:#e9e5dd;--muted:#aaa497;--dim:#857f75;--amber:#aec0ce;--amber-ink:#1d1c1a;--cmd:#93acc2;--sel:#2e2c29;--up:#d49c86;--down:#93acc2;--mid:#4a4743;--good:#a6bb9c;--k1:#93acc2;--k2:#d49c86;--k3:#a6bb9c;--k-other:#4a4743;}}
-:root[data-theme="dark"] #ovapp{color-scheme:dark;--bg:#1d1c1a;--panel:#262523;--panel-2:#2c2b28;--line:#3a3834;--fg:#e9e5dd;--muted:#aaa497;--dim:#857f75;--amber:#aec0ce;--amber-ink:#1d1c1a;--cmd:#93acc2;--sel:#2e2c29;--up:#d49c86;--down:#93acc2;--mid:#4a4743;--good:#a6bb9c;--k1:#93acc2;--k2:#d49c86;--k3:#a6bb9c;--k-other:#4a4743;}
+#ovapp{color-scheme:light;--bg:#f3f1ec;--panel:#fbfaf7;--panel-2:#f5f2ec;--line:#dfdad1;--fg:#3b3936;--muted:#625d56;--dim:#6f6a62;--amber:#4f6474;--amber-ink:#ffffff;--cmd:#5e7b91;--sel:#efebe3;--up:#b5715a;--down:#5e7b91;--mid:#d4cfc5;--good:#587250;--bad:#9c5b44;--cool:#4f6b85;--good-f:#7b9473;--k1:#5e7b91;--k2:#b5715a;--k3:#7b9473;--k-other:#d4cfc5;--f-data:"Inter","Noto Sans TC",sans-serif;--f-ui:"Inter","Noto Sans TC","PingFang TC",system-ui,sans-serif;--f-zh:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;background:transparent;padding:0;font-size:13.5px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #ovapp{color-scheme:dark;--bg:#1d1c1a;--panel:#262523;--panel-2:#2c2b28;--line:#3a3834;--fg:#e9e5dd;--muted:#aaa497;--dim:#9a948a;--amber:#aec0ce;--amber-ink:#1d1c1a;--cmd:#93acc2;--sel:#2e2c29;--up:#d49c86;--down:#93acc2;--mid:#4a4743;--good:#a6bb9c;--bad:var(--up);--cool:var(--down);--good-f:#a6bb9c;--k1:#93acc2;--k2:#d49c86;--k3:#a6bb9c;--k-other:#4a4743;}}
+:root[data-theme="dark"] #ovapp{color-scheme:dark;--bg:#1d1c1a;--panel:#262523;--panel-2:#2c2b28;--line:#3a3834;--fg:#e9e5dd;--muted:#aaa497;--dim:#9a948a;--amber:#aec0ce;--amber-ink:#1d1c1a;--cmd:#93acc2;--sel:#2e2c29;--up:#d49c86;--down:#93acc2;--mid:#4a4743;--good:#a6bb9c;--bad:var(--up);--cool:var(--down);--good-f:#a6bb9c;--k1:#93acc2;--k2:#d49c86;--k3:#a6bb9c;--k-other:#4a4743;}
 #ovapp .tip{background:var(--panel)!important;box-shadow:0 6px 20px rgba(0,0,0,.15)!important}
 #ovapp tr.hdr td{background:var(--panel-2)}
 #ovapp .panel,#ovapp .summary{border-radius:2px}
@@ -304,7 +304,7 @@
 #ovapp .vbar{display:flex;gap:2px;height:7px;border-radius:999px;overflow:hidden;background:var(--panel-2)}
 #ovapp .vbar i,#ovapp .kd.bad svg{color:var(--bad)}
 #ovapp .vbar i{display:block;height:100%}
-#ovapp .vbar .bad{background:var(--bad)} #ovapp .vbar .good{background:var(--good)} #ovapp .vbar .flat{background:var(--mid)}
+#ovapp .vbar .bad{background:var(--up)} #ovapp .vbar .good{background:var(--good-f)} #ovapp .vbar .flat{background:var(--mid)}
 #ovapp .kgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
 #ovapp .kc{padding:11px 14px 9px;gap:4px}
 #ovapp .kg{font-size:11px;color:var(--dim);letter-spacing:.04em}
@@ -332,3 +332,10 @@
 #ovapp details.summary[open]>summary h2::before{content:"▾ "}
 @media (prefers-reduced-motion:reduce){#ovapp .vd,#ovapp .kc{transition:none}}
 @media (max-width:560px){#ovapp .kgrid{grid-template-columns:repeat(2,minmax(0,1fr))}#ovapp .kc{padding:10px 10px 8px}#ovapp .kbig{font-size:24px}#ovapp .kd{font-size:11.5px;flex-wrap:wrap}#ovapp .kh .ke{display:none}}
+
+/* calendar: dates and names stay on one line, the note column wraps so the table fits its panel */
+#ovapp #ocTbl th{text-align:left}
+#ovapp #ocTbl td:last-child{white-space:normal;min-width:7em}
+/* Inflation trend and Calendar side by side only when the content column is wide enough (the sidebar narrows it) */
+#appOv{container-type:inline-size}
+@container (max-width:780px){#ovapp .ovtop{grid-template-columns:minmax(0,1fr)}}

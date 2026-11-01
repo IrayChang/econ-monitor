@@ -64,7 +64,8 @@ if (!(GST.r in GR)) GST.r = '5Y';
 const gopen = new Set(['gdp']);
 function gStack() {
   const el = document.getElementById('gstk'), node = T[GST.node], kids = node.kids;
-  const narrow = el.clientWidth < 560, W = narrow ? 460 : 900, H = narrow ? 340 : 360, x0 = 40, x1 = W - 40, y0 = 50, y1 = H - 46;
+  refit(el, gStack);
+  const narrow = el.clientWidth < 560, W = fitW(el, narrow ? 460 : 900), H = narrow ? 340 : 360, x0 = 40, x1 = W - 40, y0 = 50, y1 = H - 46;
   const isRoot = GST.node === 'gdp', e = isRoot && nc.v != null ? GL + 1 : GL;
   const s = GR[GST.r] ? Math.max(0, GL + 1 - GR[GST.r]) : 0, n = e - s, xw = (x1 - x0) / (n + 1), X = i => x0 + (i - s + 0.5) * xw;
   const tot = node.v, segs = kids.map((k, j) => ({ k, name: T[k].n, v: T[k].v, c: `--k${j % 10}` }));
@@ -93,16 +94,16 @@ function gStack() {
   for (let t = s; t <= GL; t++) if (tot[t] != null && n < 40) g += `<circle cx="${X(t)}" cy="${Yv(tot[t])}" r="2.4" fill="${css('--tot')}"/>`;
   if (e > GL) {
     g += `<rect x="${X(e) - bw / 2}" y="${Yv(Math.max(0, nc.v))}" width="${bw}" height="${Math.abs(Yv(nc.v) - Yv(0))}" fill="none" stroke="${css('--tot')}" stroke-dasharray="3 2"/>`;
-    g += `<text x="${X(e)}" y="${Yv(Math.max(0, nc.v)) - 5}" font-size="9.5" text-anchor="middle">GDPNow ${f1(nc.v)}</text>`;
+    g += `<text x="${X(e)}" y="${Yv(Math.max(0, nc.v)) - 5}" font-size="10" text-anchor="middle">GDPNow ${f1(nc.v)}</text>`;
   }
   const yrs = [...new Set(GQ.slice(s, e + 1).map(q => q.slice(0, 4)))];
   for (let t = s; t <= e; t++) if (t > 0 && GQ[t].endsWith('Q1')) g += `<line x1="${X(t) - xw / 2}" x2="${X(t) - xw / 2}" y1="${y1}" y2="${y1 + 5}" stroke="${css('--axis')}"/>`;
-  if (n < 13) for (let t = s; t <= e; t++) { g += `<text x="${X(t)}" y="${y1 + 14}" font-size="9.5" text-anchor="middle">${GQ[t].slice(5)}</text>`; if (GQ[t].endsWith('Q1') || t === s) g += `<text x="${X(t)}" y="${y1 + 27}" font-size="10" font-weight="700" text-anchor="${t === s ? 'start' : 'middle'}">${GQ[t].slice(0, 4)}</text>`; }
+  if (n < 13) for (let t = s; t <= e; t++) { g += `<text x="${X(t)}" y="${y1 + 14}" font-size="10" text-anchor="middle">${GQ[t].slice(5)}</text>`; if (GQ[t].endsWith('Q1') || t === s) g += `<text x="${X(t)}" y="${y1 + 27}" font-size="10" font-weight="700" text-anchor="${t === s ? 'start' : 'middle'}">${GQ[t].slice(0, 4)}</text>`; }
   else yrs.forEach((yr, k) => { if (n > 36 && (yrs.length - 1 - k) % 2) return; const idx = []; for (let t = s; t <= e; t++) if (GQ[t].startsWith(yr)) idx.push(t); if (idx.length >= 2) g += `<text x="${(X(idx[0]) + X(idx[idx.length - 1])) / 2}" y="${y1 + 15}" font-size="10.5" text-anchor="middle">${yr.slice(2)}</text>`; });
   g += `<rect x="${x0}" y="${y0}" width="${x1 - x0}" height="${y1 - y0}" fill="none" stroke="${css('--frame')}" stroke-width=".8"/>`;
   const title = isRoot ? 'Contributions to Real GDP Growth' : `Contributions to Real GDP Growth: ${node.n}`;
   g += `<text x="${W / 2}" y="16" font-size="12.5" text-anchor="middle" style="fill:${css('--ink')}">${title}</text><text x="${W / 2}" y="31" font-size="11" text-anchor="middle" style="fill:${css('--ink')}">% Change, SAAR, Percentage Points</text>`;
-  g += `<text x="${x0 - 30}" y="${H - 4}" font-size="9.5">Source:  Bureau of Economic Analysis${narrow ? '' : '; nowcast: Federal Reserve Bank of Atlanta'}</text>`;
+  g += `<text x="${x0 - 30}" y="${H - 4}" font-size="10">Source:  Bureau of Economic Analysis${narrow ? '' : '; nowcast: Federal Reserve Bank of Atlanta'}</text>`;
   g += `<line class="xh" y1="${y0}" y2="${y1}" stroke="${css('--axis')}" stroke-width=".6" visibility="hidden"/>`;
   el.innerHTML = `<div class="plot"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${title}">${g}</svg><div class="tip"></div></div><div class="tb"></div>`;
   const path = []; for (let k = GST.node; k; k = T[k].p) path.unshift(k);

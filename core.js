@@ -35,8 +35,26 @@ function ext(arrs, s, e) {
 }
 const fmtT = (v, step) => (Math.abs(v) < 1e-9 ? 0 : v).toFixed(Math.abs(step * 10 - Math.round(step * 10)) > 1e-9 ? 2 : Math.abs(step - Math.round(step)) > 1e-9 ? 1 : 0);
 
+// chart width in viewBox units = its width on screen, so font-size 10 draws at 10px instead of shrinking with the box
+function fitW(el, def) {
+  const cs = getComputedStyle(el), w = el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  return w > 0 ? Math.max(300, Math.round(w)) : def;
+}
+// redraw a chart when its box changes width (sidebar toggle, window resize, a hidden panel shown)
+function refit(el, draw) {
+  el._draw = draw; el._fw = el.clientWidth;
+  if (el._ro) return;
+  el._ro = new ResizeObserver(() => {
+    const w = el.clientWidth;
+    if (!w || Math.abs(w - el._fw) < 16) return;
+    el._fw = w; requestAnimationFrame(() => el._draw());
+  });
+  el._ro.observe(el);
+}
+
 function hv(el, o) {
-  const W = o.W || 460, H = o.H || 330, pl = 40, pr = 40, pt = 50, pb = 46;
+  const W = fitW(el, o.W || 460), H = o.H || 330, pl = 40, pr = 40, pt = 50, pb = 46;
+  if (!o.big) refit(el, () => hv(el, o));
   const x0 = pl, x1 = W - pr, y0 = pt, y1 = H - pb;
   const MO = o.months || M, s = o.start, e = MO.length - 1, n = e - s;
   const xw = (x1 - x0) / (n + 1);
@@ -73,7 +91,7 @@ function hv(el, o) {
   if (short) {
     for (let i = s; i <= e; i++) {
       const sub = subOf(MO[i]), lab = ppy === 52 ? (i === s || subOf(MO[i - 1]) !== sub ? MON[sub - 1] : '') : ppy === 4 ? 'Q' + sub : MON[sub - 1];
-      if (lab && (ppy !== 12 || n < 12 || (sub - 1) % 3 === 0)) g += `<text x="${X(i)}" y="${y1 + 14}" font-size="9.5" text-anchor="middle">${lab}</text>`;
+      if (lab && (ppy !== 12 || n < 12 || (sub - 1) % 3 === 0)) g += `<text x="${X(i)}" y="${y1 + 14}" font-size="10" text-anchor="middle">${lab}</text>`;
       if (yearStart(MO, i) || i === s) g += `<text x="${X(i)}" y="${y1 + 27}" font-size="10" text-anchor="${i === s ? 'start' : 'middle'}" font-weight="700">${MO[i].slice(0, 4)}</text>`;
     }
   } else {
@@ -116,7 +134,7 @@ function hv(el, o) {
       : `<line x1="${x0 + 6}" x2="${x0 + 20}" y1="${ly - 3}" y2="${ly - 3}" stroke="${col}" stroke-width="1.6" ${q.dash ? 'stroke-dasharray="4 2.5"' : ''}/>`;
     g += `<text x="${x0 + 25}" y="${ly}" font-size="10" style="fill:${col}">${esc(q.name)}${q.nsa ? ' (NSA)' : ''}${dual ? ` (${q.axis})` : ''}</text>`;
   });
-  g += `<text x="${x0 - 30}" y="${H - 4}" font-size="9.5">Source:  ${o.src || K.src}</text>`;
+  g += `<text x="${x0 - 30}" y="${H - 4}" font-size="10">Source:  ${o.src || K.src}</text>`;
   g += `<line class="xh" y1="${y0}" y2="${y1}" stroke="${css('--axis')}" stroke-width=".6" visibility="hidden"/>`;
   g += `<rect class="hit" x="${x0}" y="${y0}" width="${x1 - x0}" height="${y1 - y0}" fill="transparent"/>`;
   el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.title + ', ' + o.sub)}">${g}</svg><div class="tip"></div>`;

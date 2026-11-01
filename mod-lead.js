@@ -167,8 +167,10 @@
       html += `<div class="charts"><div class="hv" id="ldc"></div><div class="tblw curvet"><table><thead><tr><th>期限</th><th>${now.date.slice(5).replace('-', '/')}</th>${mo ? `<th>1 個月變動</th>` : ''}${yr ? `<th>1 年變動</th>` : ''}</tr></thead><tbody>` +
         T.map(([k, l]) => `<tr><td>${l}</td><td>${f2(now.y[k])}</td>${mo ? ch(now.y[k], mo.y[k]) : ''}${yr ? ch(now.y[k], yr.y[k]) : ''}</tr>`).join('') +
         `</tbody></table><p class="note">單位：%；變動為基點。每日收盤公債殖利率曲線（面值殖利率），資料日 ${now.date}；來源：美國財政部。</p></div></div>`;
-      draws.push(() => {
-        const el = document.getElementById('ldc'), W = 460, H = 330, P = { l: 40, r: 16, t: 50, b: 46 };
+      draws.push(function curve() {
+        const el = document.getElementById('ldc'), W = fitW(el, 460);
+        refit(el, curve);
+        const H = 330, P = { l: 40, r: 16, t: 50, b: 46 };
         const lines = [[now, '--c1', ''], [mo, '--c2', '5 3'], [yr, '--axis', '1.5 3']].filter(x => x[0]);
         const vals = lines.flatMap(([c]) => T.map(([k]) => c.y[k]).filter(v => v != null));
         const sc = nice(Math.min(...vals), Math.max(...vals), 5), X = i => P.l + i * (W - P.l - P.r) / (T.length - 1), Y = v => P.t + (sc.hi - v) / (sc.hi - sc.lo) * (H - P.t - P.b);
@@ -179,7 +181,7 @@
           g += `<path d="${T.map(([k], i) => c.y[k] == null ? '' : `${i ? 'L' : 'M'}${X(i).toFixed(1)} ${Y(c.y[k]).toFixed(1)}`).join('')}" fill="none" stroke="var(${col})" stroke-width="1.8" stroke-dasharray="${dash}"/>`;
           T.forEach(([k, l], i) => { if (c.y[k] != null) g += `<circle cx="${X(i)}" cy="${Y(c.y[k])}" r="2.6" fill="var(${col})"><title>${c.label} ${c.date} ${l}: ${f2(c.y[k])}%</title></circle>`; });
         });
-        g += lines.map(([c, col, dash], j) => `<line x1="${P.l + j * 140}" x2="${P.l + j * 140 + 18}" y1="${H - 12}" y2="${H - 12}" stroke="var(${col})" stroke-width="2" stroke-dasharray="${dash}"/><text x="${P.l + j * 140 + 24}" y="${H - 8}" font-size="10.5">${c.label} ${c.date.slice(5).replace('-', '/')}</text>`).join('');
+        g += lines.map(([c, col, dash], j) => `<line x1="${P.l + j * Math.min(140, (W - P.l) / 3)}" x2="${P.l + j * Math.min(140, (W - P.l) / 3) + 18}" y1="${H - 12}" y2="${H - 12}" stroke="var(${col})" stroke-width="2" stroke-dasharray="${dash}"/><text x="${P.l + j * Math.min(140, (W - P.l) / 3) + 24}" y="${H - 8}" font-size="10.5">${c.label} ${c.date.slice(5).replace('-', '/')}</text>`).join('');
         el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="公債殖利率曲線：最新、1 個月前與 1 年前">${g}</svg>`;
       });
     }
