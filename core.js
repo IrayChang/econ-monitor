@@ -266,6 +266,24 @@ function mount(id) { document.getElementById('app').appendChild(document.getElem
 (function nav() {
   document.getElementById('nav').innerHTML = NAV.map(([g, xs]) => `<span class="ng">${g ? `<span class="ngl">${g}</span>` : ''}${xs.map(([k, l]) =>
     `<a href="#${k}"${k === DK ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</span>`).join('');
+  // collapsible sidebar: docked beside the page on wide screens (state remembered), an overlay drawer on narrow ones
+  const side = document.getElementById('side'), open = document.getElementById('sideOpen'), scrim = document.getElementById('scrim');
+  document.getElementById('sbrand').textContent = document.title;
+  const wide = matchMedia('(min-width: 1000px)');
+  let pref = null; try { pref = localStorage.getItem('hvdemo.side'); } catch (e) {}
+  const set = (on, remember) => {
+    document.body.classList.toggle('side-on', on);
+    side.toggleAttribute('inert', !on); open.setAttribute('aria-expanded', on);
+    scrim.hidden = !on || wide.matches;
+    if (remember && wide.matches) try { localStorage.setItem('hvdemo.side', on ? 'open' : 'closed'); } catch (e) {}
+  };
+  set(wide.matches && pref !== 'closed');
+  open.onclick = () => { set(true, true); side.querySelector('[aria-current]')?.focus(); };
+  document.getElementById('sideClose').onclick = () => { set(false, true); open.focus(); };
+  scrim.onclick = () => set(false);
+  addEventListener('keydown', e => { if (e.key === 'Escape' && !wide.matches && document.body.classList.contains('side-on')) { set(false); open.focus(); } });
+  wide.addEventListener('change', () => set(wide.matches && pref !== 'closed'));
+  requestAnimationFrame(() => document.body.classList.add('side-ready'));
 })();
 (function load() {
   const add = src => new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.body.appendChild(s); });

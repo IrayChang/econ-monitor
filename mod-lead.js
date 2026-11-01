@@ -37,7 +37,7 @@
   const chart = o => draws.push(() => {
     const el = document.getElementById(o.id), axis = o.k ? extend(o.axis, o.k) : o.axis;
     const series = o.series.map(s => ({ ...s, v: s.v.length < axis.length ? pad(s.v, axis.length - s.v.length) : s.v, axis: s.axis || 'L' }));
-    hv(el, { W: 460, H: 330, months: axis, start: Math.max(0, axis.indexOf(o.from)), title: o.title, sub: o.sub, src: o.src, series, ref: o.ref, unit: o.unit });
+    hv(el, { W: 460, H: 330, months: axis, start: Math.max(0, axis.indexOf(o.from)), title: o.title, sub: o.sub, src: o.src, series, ref: o.ref, unit: o.unit, fmt: o.fmt });
   });
 
   // Cleveland Fed nowcast table: the months not yet published, plus the latest published one for comparison
@@ -152,12 +152,52 @@
       series: [{ name: 'New orders less inventories, 6M later', v: later(ni, 6), c: '--c2', dash: 1 }, { name: 'Manufacturing PMI', v: pm, c: '--c1', axis: 'R' }] });
   }
   if (DK === 'overview') {
-    const sp = minus(m.T10Y, m.T3M), L_ = lastI(sp);
+    const f2 = v => v == null ? 'n.a.' : v.toFixed(2), bp = v => v == null ? 'n.a.' : `${v > 0 ? '+' : ''}${Math.round(v)}`;
+    const s2s10 = minus(m.T10Y, m.T2Y), s3m10 = minus(m.T10Y, m.T3M);
+    const fly = m.T10Y.map((v, t) => v == null || m.T2Y[t] == null || m.T30Y[t] == null ? null : (2 * v - m.T2Y[t] - m.T30Y[t]) * 100);
+    const bei = minus(m.T10Y, m.R10Y), L_ = lastI(m.T10Y), mtd = LD.updated && LD.updated.slice(0, 7) === LM[L_] ? '（月初至今）' : '';
+    const C = LD.curve || [];
     section('Yield curve',
-      '10 年期減 3 個月期公債殖利率。曲線倒掛（低於 0）在過去幾次美國衰退前都出現過，通常領先 12–18 個月，但 2022–2024 年的長時間倒掛並未伴隨衰退，所以只當成風險訊號。月資料為每日殖利率的月平均，當月為月初至今。',
-      ['ld1', 'ld2'], `${mzh(LM[L_])}（月初至今）10 年期 ${f1(m.T10Y[L_])}%、3 個月期 ${f1(m.T3M[L_])}%，利差 <b>${sg(sp[L_])}</b> 個百分點。`);
-    chart({ id: 'ld1', axis: LM, from: MF, title: 'Yield Curve: 10-Year less 3-Month', sub: 'Percentage points, monthly average', src: 'U.S. Treasury', ref: 0, series: [{ name: '10Y less 3M', v: sp, c: '--c1' }] });
-    chart({ id: 'ld2', axis: LM, from: MF, title: 'Treasury Yields', sub: '%, monthly average', src: 'U.S. Treasury', series: [{ name: '10-year', v: m.T10Y, c: '--c1' }, { name: '3-month', v: m.T3M, c: '--c2' }] });
+      '殖利率、利差與蝶式價差都是每日數字的月平均，當月為月初至今。10 年期減 2 年期與減 3 個月期是最常用的衰退訊號：倒掛（低於 0）在過去幾次衰退前都出現過，但 2022–2024 年的長時間倒掛並未伴隨衰退，所以只當成風險訊號。蝶式價差＝2×10 年 − 2 年 − 30 年（基點）：數值變大代表中段（10 年）相對兩端變便宜。實質殖利率來自抗通膨公債（TIPS），兩者相減是市場隱含的 10 年平均通膨（損益兩平通膨率）。',
+      [], `${mzh(LM[L_])}${mtd}：2 年期 ${f2(m.T2Y[L_])}%、10 年期 ${f2(m.T10Y[L_])}%、30 年期 ${f2(m.T30Y[L_])}%；10 年減 2 年 <b>${bp(s2s10[L_] * 100)}</b> 基點、10 年減 3 個月 <b>${bp(s3m10[L_] * 100)}</b> 基點、蝶式 <b>${bp(fly[L_])}</b> 基點；10 年期損益兩平通膨 ${f2(bei[L_])}%。`);
+    if (C.length) {
+      const T = [['T1M', '1M'], ['T3M', '3M'], ['T6M', '6M'], ['T1Y', '1Y'], ['T2Y', '2Y'], ['T3Y', '3Y'], ['T5Y', '5Y'], ['T7Y', '7Y'], ['T10Y', '10Y'], ['T20Y', '20Y'], ['T30Y', '30Y']];
+      const [now, mo, yr] = [C[0], C.find(c => c.label === '1 個月前'), C.find(c => c.label === '1 年前')];
+      const ch = (a, b) => a == null || b == null ? '<td>n.a.</td>' : `<td class="${a > b ? 'up' : a < b ? 'dn' : ''}">${bp((a - b) * 100)}</td>`;
+      html += `<div class="charts"><div class="hv" id="ldc"></div><div class="tblw curvet"><table><thead><tr><th>期限</th><th>${now.date.slice(5).replace('-', '/')}</th>${mo ? `<th>1 個月變動</th>` : ''}${yr ? `<th>1 年變動</th>` : ''}</tr></thead><tbody>` +
+        T.map(([k, l]) => `<tr><td>${l}</td><td>${f2(now.y[k])}</td>${mo ? ch(now.y[k], mo.y[k]) : ''}${yr ? ch(now.y[k], yr.y[k]) : ''}</tr>`).join('') +
+        `</tbody></table><p class="note">單位：%；變動為基點。每日收盤公債殖利率曲線（面值殖利率），資料日 ${now.date}；來源：美國財政部。</p></div></div>`;
+      draws.push(() => {
+        const el = document.getElementById('ldc'), W = 460, H = 330, P = { l: 40, r: 16, t: 50, b: 46 };
+        const lines = [[now, '--c1', ''], [mo, '--c2', '5 3'], [yr, '--axis', '1.5 3']].filter(x => x[0]);
+        const vals = lines.flatMap(([c]) => T.map(([k]) => c.y[k]).filter(v => v != null));
+        const sc = nice(Math.min(...vals), Math.max(...vals), 5), X = i => P.l + i * (W - P.l - P.r) / (T.length - 1), Y = v => P.t + (sc.hi - v) / (sc.hi - sc.lo) * (H - P.t - P.b);
+        let g = `<text x="${W / 2}" y="18" text-anchor="middle" font-size="13" font-weight="600" style="fill:var(--ink)">Treasury Yield Curve</text><text x="${W / 2}" y="33" text-anchor="middle" font-size="11">%, daily close by maturity</text>`;
+        for (let v = sc.lo; v <= sc.hi + 1e-9; v += sc.step) g += `<line x1="${P.l}" x2="${W - P.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--grid)"/><text x="${P.l - 6}" y="${Y(v) + 3}" text-anchor="end" font-size="10">${(+v.toFixed(2)).toString()}</text>`;
+        T.forEach(([, l], i) => { g += `<text x="${X(i)}" y="${H - P.b + 14}" text-anchor="middle" font-size="10">${l}</text>`; });
+        lines.forEach(([c, col, dash]) => {
+          g += `<path d="${T.map(([k], i) => c.y[k] == null ? '' : `${i ? 'L' : 'M'}${X(i).toFixed(1)} ${Y(c.y[k]).toFixed(1)}`).join('')}" fill="none" stroke="var(${col})" stroke-width="1.8" stroke-dasharray="${dash}"/>`;
+          T.forEach(([k, l], i) => { if (c.y[k] != null) g += `<circle cx="${X(i)}" cy="${Y(c.y[k])}" r="2.6" fill="var(${col})"><title>${c.label} ${c.date} ${l}: ${f2(c.y[k])}%</title></circle>`; });
+        });
+        g += lines.map(([c, col, dash], j) => `<line x1="${P.l + j * 140}" x2="${P.l + j * 140 + 18}" y1="${H - 12}" y2="${H - 12}" stroke="var(${col})" stroke-width="2" stroke-dasharray="${dash}"/><text x="${P.l + j * 140 + 24}" y="${H - 8}" font-size="10.5">${c.label} ${c.date.slice(5).replace('-', '/')}</text>`).join('');
+        el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="公債殖利率曲線：最新、1 個月前與 1 年前">${g}</svg>`;
+      });
+    }
+    html += `<div class="charts">${['ld1', 'ld2', 'ld3', 'ld4', 'ld5', 'ld6'].map(i => `<div class="hv" id="${i}"></div>`).join('')}</div>`;
+    const src = 'U.S. Treasury', pct = v => v.toFixed(2) + '%', pp = v => `${v > 0 ? '+' : ''}${Math.round(v * 100)} bp`;
+    chart({ id: 'ld1', axis: LM, from: MF, title: 'Treasury Yields: 2, 10 and 30 Years', sub: '%, monthly average', src, fmt: pct,
+      series: [{ name: '2-year', v: m.T2Y, c: '--c2' }, { name: '10-year', v: m.T10Y, c: '--c1' }, { name: '30-year', v: m.T30Y, c: '--c3' }] });
+    chart({ id: 'ld2', axis: LM, from: MF, title: 'Yield Curve Spreads', sub: 'Percentage points, monthly average', src, ref: 0, fmt: pp,
+      series: [{ name: '10Y less 2Y', v: s2s10, c: '--c1' }, { name: '10Y less 3M', v: s3m10, c: '--c2', dash: 1 }] });
+    chart({ id: 'ld3', axis: LM, from: MF, title: '2s10s30s Butterfly', sub: 'Basis points: 2 × 10Y − 2Y − 30Y, monthly average', src, ref: 0, fmt: v => `${Math.round(v)} bp`,
+      series: [{ name: '2s10s30s butterfly', v: fly, c: '--c4' }] });
+    chart({ id: 'ld4', axis: LM, from: MF, title: '10-Year Real Yield and Breakeven Inflation', sub: '%, monthly average', src: 'U.S. Treasury (TIPS real yield curve)', fmt: pct,
+      series: [{ name: '10Y nominal', v: m.T10Y, c: '--c1' }, { name: '10Y real (TIPS)', v: m.R10Y, c: '--c3' }, { name: '10Y breakeven', v: bei, c: '--c2', dash: 1 }] });
+    chart({ id: 'ld5', axis: LM, from: '2018-04', title: 'Policy Rate and Money Markets', sub: '%, monthly average; target range at month end', src: 'Federal Reserve Bank of New York; U.S. Treasury', fmt: pct,
+      series: [{ name: 'Target range, top', v: m.FFTU, c: '--frame', dash: 1 }, { name: 'Target range, bottom', v: m.FFTL, c: '--frame', dash: 1 }, { name: 'EFFR', v: m.EFFR, c: '--c1' }, { name: 'SOFR', v: m.SOFR, c: '--c2' }, { name: '3-month bill', v: m.T3M, c: '--c3' }] });
+    chart({ id: 'ld6', axis: LM, from: MF, title: '2-Year Yield less Fed Funds', sub: 'Percentage points: 2Y less EFFR, monthly average', src: 'U.S. Treasury; Federal Reserve Bank of New York', ref: 0, fmt: pp,
+      series: [{ name: '2Y less EFFR', v: minus(m.T2Y, m.EFFR), c: '--c1' }] });
+    html += `<p class="note">2 年期減聯邦資金利率大於 0，表示市場預期未來兩年政策利率偏升；小於 0 表示預期降息。利率交換（IRS／SOFR swap）報價屬於 ICE 等民間授權資料，沒有官方免費來源，所以未納入；改用紐約聯準銀行公布的 SOFR 與有效聯邦資金利率（EFFR）呈現短端資金成本。</p>`;
   }
   if (!html) return;
   host.innerHTML = html;

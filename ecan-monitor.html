@@ -10,9 +10,14 @@
 <link rel="stylesheet" href="ov.css">
 </head>
 <body>
-<div class="wrap">
-  <div class="demo" id="demo"></div>
+<aside class="side" id="side" aria-label="選單">
+  <div class="sideh"><span class="sbrand" id="sbrand"></span><button type="button" class="sidebtn" id="sideClose" aria-label="收起側欄" title="收起側欄"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M9 4v16"/></svg></button></div>
   <nav class="dsnav" id="nav" aria-label="Dataset"></nav>
+  <div class="demo" id="demo"></div>
+</aside>
+<button type="button" class="sidebtn sideopen" id="sideOpen" aria-label="展開側欄" title="展開側欄" aria-controls="side"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M9 4v16"/></svg></button>
+<div class="scrim" id="scrim" hidden></div>
+<div class="wrap">
   <main id="app"></main>
 </div>
 <template id="tpl-tree">

@@ -245,7 +245,7 @@ const E = K.energy, F = K.food, SV = K.svc, GD = K.goods, SH = K.ex;
 document.getElementById('dt').textContent = D.pub ? fmtDate(D.pub) : `Data through ${mlab(lm)} ${lm.slice(0, 4)}`;
 if (KIND === 'price') HD.textContent =
   `美國 ${+lm.slice(5)} 月 ${K.tab} ${mA >= 0 ? '上漲' : '下跌'} ${f1(Math.abs(mA))}%，${MM(E)[L] > 1 ? '能源推升總體，' : MM(E)[L] < -1 ? '能源拉低總體，' : ''}核心${verb(mC, MM(C)[L - 1])} ${f1(mC)}%`;
-document.getElementById('demo').textContent = `Demo：Economy in Brief 的版面與出版圖風格，加上互動。同一個版型套用物價、就業、零售等資料，用上方按鈕切換。資料為頁面現有 ${K.tab}（至 ${mzh(lm)}）。`;
+document.getElementById('demo').textContent = `Demo：Economy in Brief 的版面與出版圖風格，加上互動。同一個版型套用物價、就業、零售等資料，用左側選單切換。資料為頁面現有 ${K.tab}（至 ${mzh(lm)}）。`;
 document.getElementById('note').textContent = KIND !== 'price' ? `${K.srcNote}${K.wNote}${KIND === 'nfp' ? '堆疊圖的貢獻是各產業就業人數的變動（千人），加總等於上層的變動；' : '堆疊圖的貢獻加總等於上層的變動；'}細項加總與上層的差額列為 Other / residual。` : `${K.srcNote}月變動與年化為季節調整後數字${D.nsa.some((x, i) => x !== D.sa[i]) ? '（無季調序列的項目改用未季調，標示 NSA），年增與年度平均變動為未季調數字' : ''}。${K.wNote}堆疊圖的貢獻＝細項變動 × 細項權重 ÷ 上層權重；細項加總與上層的差額列為 Other / residual。`;
 document.getElementById('nItems').textContent = IT.length;
 const since = (arr, v) => { for (let i = L - 1; i >= 0; i--) if (arr[i] != null && arr[i] >= v) return M[i]; return null; };
