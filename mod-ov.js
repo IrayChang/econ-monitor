@@ -217,6 +217,8 @@ function calendar(){
   for(let i=0;i<3;i++){ const s=d.toISOString().slice(0,10); add(s,'初領失業金','pulse',null); d.setDate(d.getDate()+7); }
   return items.sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0);
 }
+// next release for an indicator; ISM services and the S&P composite come out later than the manufacturing reports
+const nextOf=(cal,ind)=>{ const later=['ism_s','no_s','sp_c'].includes(ind.id); return cal.find(x=>x.src===ind.src&&x.d>=TODAY&&(!later||x.n.includes('服務業'))); };
 function renderCal(){
   const it=calendar(), lim=new Date(TODAY+'T12:00:00'); lim.setDate(lim.getDate()+28); const end=lim.toISOString().slice(0,10);
   const rows=it.filter(x=>x.d<=end&&(x.d>=TODAY||(x.ref&&!have(x.src,x.ref))));
@@ -240,7 +242,7 @@ function renderTbl(){
   let h=`<thead><tr><th>指標</th><th>最新</th><th>期間</th><th>趨勢線</th><th>趨勢</th><th>變化</th><th>近期 vs 趨勢</th><th>與預期</th><th>基準</th><th>近 2 年</th><th>下次公布</th></tr></thead><tbody>`;
   const cal=calendar();
   GROUPS.forEach(([g,z,en])=>{ h+=`<tr class="hdr"><td class="nm" colspan="11"><span class="lab">${en} · ${z}</span></td></tr>`;
-    IND.filter(i=>i.g===g).forEach(ind=>{ const r=read(ind), P=PER(ind), c=ind.cons?ind.cons():null, nx=cal.find(x=>x.src===ind.src&&x.d>=TODAY);
+    IND.filter(i=>i.g===g).forEach(ind=>{ const r=read(ind), P=PER(ind), c=ind.cons?ind.cons():null, nx=nextOf(cal,ind);
       const tv=r.tt>=0?ind.trend[r.tt]:null;
       // heatmap (shared helpers in core.js): each value against the indicator's own pre-pandemic norm
       const tn=ind.good>0?'good':ind.good<0&&ind.g!=='inf'?'bad':'price', fv=ind.fast[r.tf];
@@ -305,7 +307,7 @@ const KPI = ['gdp','ctrl','ism_m','ism_s','pce','cpi','shl','ppi','ur','nfp','ic
 function renderKpi(){
   const cal=calendar();
   $('#oKpi').innerHTML=KPI.map(id=>{ const ind=IND.find(i=>i.id===id), r=read(ind), t=tone(ind,r), dk=r.dir>0?'up':r.dir<0?'down':'flat';
-    const word=r.dir==null?'—':r.dir>0?'上升':r.dir<0?'下降':'持平', nx=cal.find(x=>x.src===ind.src&&x.d>=TODAY), big=val(ind,ind.trend[r.tt]);
+    const word=r.dir==null?'—':r.dir>0?'上升':r.dir<0?'下降':'持平', nx=nextOf(cal,ind), big=val(ind,ind.trend[r.tt]);
     const z=GROUPS.find(x=>x[0]===ind.g)[1], ch=r.d==null?'':`近 ${ind.q?'2 季':'6 個月'} ${sg(+r.d.toFixed(ind.d)||0,ind.d)}${ind.u==='k'?'k':''}`;
     return `<button type="button" class="kc" data-src="${ind.src}" aria-label="${esc(`${ind.n} ${ind.tl} ${big}，趨勢${word}，${TONE[t]}，${ch}`)}">
       <span class="kg">${z}</span><span class="kh"><span class="kn">${esc(ind.n.replace(/（.*）/,''))}</span><span class="ke">${ind.tl}</span></span>

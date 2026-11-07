@@ -100,7 +100,8 @@ if (DK === 'ism') {
   const fl = s => SP(`${s}:flash`), fi = s => SP(`${s}:final`), flc = s => SP(`${s}:flashFc`);
   const Lf = Math.max(...SEC.map(([s]) => lastIdx(fl(s)))), Lz = Math.max(...SEC.map(([s]) => lastIdx(fi(s)))), lm = AX[Lf];
   document.getElementById('dt').textContent = `Flash ${plab(AX[Lf])} · Final ${plab(AX[Lz])}`;
-  document.getElementById('hd').textContent = `美國 ${+lm.slice(5)} 月 S&P Global 綜合 PMI 初值 ${f1(fl('cmp')[Lf])}，製造業 ${f1(fl('mfg')[Lf])}，服務業 ${f1(fl('svc')[Lf])}`;
+  const isFinal = Lz >= Lf, hv = isFinal ? fi : fl;   // once the final for the flash month is out, lead with it
+  document.getElementById('hd').textContent = `美國 ${+lm.slice(5)} 月 S&P Global 綜合 PMI ${isFinal ? '終值' : '初值'} ${f1(hv('cmp')[Lf])}，製造業 ${f1(hv('mfg')[Lf])}，服務業 ${f1(hv('svc')[Lf])}`;
   let h = `<thead><tr class="grp"><th>S&P Global US PMI</th><th class="vl" colspan="3">Flash</th><th class="vl" colspan="2">Final</th><th class="vl">vs. 50</th><th class="vl">ISM</th><th class="vl">24 mo.</th></tr>
 <tr><th></th><th class="vl">${mlab(AX[Lf])} '${AX[Lf].slice(2, 4)}</th><th>Consensus</th><th>Surprise</th><th class="vl">${mlab(AX[Lz])}</th><th>${mlab(AX[Lz - 1])}</th><th class="vl"></th><th class="vl">${mlab(AX[Lz])}</th><th class="vl"></th></tr></thead><tbody>`;
   const ism = { mfg: IS('m:Manufacturing PMI'), svc: IS('s:Services PMI'), cmp: null };
@@ -114,7 +115,8 @@ if (DK === 'ism') {
   document.getElementById('sLg').innerHTML = SLG.replace('變動欄位：與該指數平常的月變動相比。', '預期差（Surprise）：綠＝優於預期，差 2 點為滿色。');
   document.getElementById('sheatSec').hidden = true;
   const gap = s => fl(s)[Lf] - fi(s)[Lz];
-  document.getElementById('sp1').innerHTML = `<p>${mzh(lm)} S&P Global 美國綜合 PMI 初值為 ${f1(fl('cmp')[Lf])}，前月終值 ${f1(fi('cmp')[Lz])}（${sgn(gap('cmp'))}）。製造業初值 ${f1(fl('mfg')[Lf])}，${fl('mfg')[Lf] >= flc('mfg')[Lf] ? '高於' : '低於'}預期的 ${f1(flc('mfg')[Lf])}；服務業初值 ${f1(fl('svc')[Lf])}，${fl('svc')[Lf] >= flc('svc')[Lf] ? '高於' : '低於'}預期的 ${f1(flc('svc')[Lf])}。</p>
+  const finTxt = s => `終值 ${f1(fi(s)[Lz])}，初值 ${f1(fl(s)[Lf])}，前月 ${f1(fi(s)[Lz - 1])}`;
+  document.getElementById('sp1').innerHTML = (isFinal ? `<p>${mzh(lm)} S&P Global 美國綜合 PMI ${finTxt('cmp')}（較前月 ${sgn(fi('cmp')[Lz] - fi('cmp')[Lz - 1])}）。製造業${finTxt('mfg')}；服務業${finTxt('svc')}。</p>` : `<p>${mzh(lm)} S&P Global 美國綜合 PMI 初值為 ${f1(fl('cmp')[Lf])}，前月終值 ${f1(fi('cmp')[Lz])}（${sgn(gap('cmp'))}）。製造業初值 ${f1(fl('mfg')[Lf])}，${fl('mfg')[Lf] >= flc('mfg')[Lf] ? '高於' : '低於'}預期的 ${f1(flc('mfg')[Lf])}；服務業初值 ${f1(fl('svc')[Lf])}，${fl('svc')[Lf] >= flc('svc')[Lf] ? '高於' : '低於'}預期的 ${f1(flc('svc')[Lf])}。</p>`) + `
 <p>與 ISM 比較：${mzh(AX[Lz])} ISM 製造業 ${f1(ism.mfg[Lz])}、S&P 製造業 ${f1(fi('mfg')[Lz])}；ISM 服務業 ${f1(ism.svc[Lz])}、S&P 服務業 ${f1(fi('svc')[Lz])}。兩者樣本與問法不同，方向一致時訊號較可靠。</p>`;
   const CAT = [];
   for (const [s, n] of SEC) CAT.push({ k: `sp:${s}`, n: `S&P ${n} PMI, final`, v: fi(s), grp: 'S&P Global, final' }, { k: `spf:${s}`, n: `S&P ${n} PMI, flash`, v: fl(s), grp: 'S&P Global, flash' }, { k: `spc:${s}`, n: `S&P ${n} PMI, flash consensus`, v: flc(s), grp: 'Consensus' });
