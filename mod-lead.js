@@ -111,7 +111,7 @@
     const eci = yoy(q.ECI, 4), ulc = yoy(q.ULC, 4), prd = yoy(q.PROD, 4), el = lastI(eci), ul = lastI(ulc), ql = lastI(m.QUR);
     section('Wages',
       '平均時薪最快（每月），但有組成效果：低薪工作大量減少時，平均數會「看起來」上升。雇用成本指數（ECI）固定職業組成，是聯準會最重視的工資指標；亞特蘭大聯準銀行工資追蹤看同一批人的工資變化。單位勞動成本＝工資扣掉生產力，才是真正的通膨壓力。實質時薪＝時薪年增減 CPI 年增。',
-      ['ld1', 'ld2'], `${mzh(LM[L_])}平均時薪年增 <b>${f1(ahe[L_])}%</b>，扣除 CPI 後實質 ${f1(real[L_])}%；亞特蘭大 Fed 工資追蹤 ${mzh(LM[wl])} ${f1(wgt[wl])}%。ECI 民間工資 ${pLab(LQ[el])}年增 <b>${f1(eci[el])}%</b>；單位勞動成本 ${pLab(LQ[ul])}年增 ${f1(ulc[ul])}%，生產力 ${f1(prd[ul])}%。`);
+      ['ld1', 'ld2'], `${mzh(LM[L_])}平均時薪年增 <b>${f1(ahe[L_])}%</b>，${real[L_] == null ? '當月 CPI 年增率暫缺，實質時薪無法計算' : `扣除 CPI 後實質 ${f1(real[L_])}%`}；亞特蘭大 Fed 工資追蹤 ${mzh(LM[wl])} ${f1(wgt[wl])}%。ECI 民間工資 ${pLab(LQ[el])}年增 <b>${f1(eci[el])}%</b>；單位勞動成本 ${pLab(LQ[ul])}年增 ${f1(ulc[ul])}%，生產力 ${f1(prd[ul])}%。`);
     chart({ id: 'ld1', axis: LM, from: MF, title: 'Wage Growth: Three Measures', sub: '% change, year over year', src: 'BLS; Atlanta Fed Wage Growth Tracker', ref: 0,
       series: [{ name: 'Average hourly earnings', v: ahe, c: '--c1' }, { name: 'Atlanta Fed wage tracker (3MMA)', v: wgt, c: '--c3' }, { name: 'Real AHE (less CPI)', v: real, c: '--c2', dash: 1 }] });
     chart({ id: 'ld2', axis: LQ, from: QF, title: 'ECI, Unit Labor Costs and Productivity', sub: '% change, 4 quarters', src: 'BLS (ECI; productivity and costs)',

@@ -284,12 +284,15 @@ if (KIND !== 'nfp') (function drawOverview() {
   el.addEventListener('click', ev => { const b = ev.target.closest('button[data-ov]'); if (b) selectItem(+b.dataset.ov, 'compo'); });
 })();
 document.getElementById('ovLg').innerHTML = heatLegend(HTONE, KIND === 'nfp' ? '綠＝就業增加多、失業率低（對景氣有利），赭紅＝不利；時薪成長改用藍（低）與赭紅（高）。顏色深淺＝與該項目 2016–2019 年（疫情前）同一衡量的平均相比，差距以平常的波動幅度衡量（約 2.5 倍時為滿色）。' : undefined);
-const trendY = (v, p) => Math.abs(v - p) < 0.3 ? '持平' : v > p ? '走高' : '走低';
+const trendY = (v, p) => v == null || p == null ? null : Math.abs(v - p) < 0.3 ? '持平' : v > p ? '走高' : '走低';
+// a year-ago index can be missing (no official index that month), so the 12-month change is n.a. and comparisons on it are dropped
+const yz = v => v == null ? '年增率無法計算' : `年增 ${f1(v)}%`;
+const yGap = yA == null ? `（${mzh(M[L - 12])}無官方指數）` : '';
 if (KIND === 'price') document.getElementById('p1').innerHTML = `
-<p>美國 ${mzh(lm)}${K.zh}季調後${chg(mA)}，前月為 ${f1(MM(A)[L - 1])}%，再前月為 ${f1(MM(A)[L - 2])}%。年增率由 ${f1(Y(A)[L - 1])}% ${yA > Y(A)[L - 1] ? '升至' : yA < Y(A)[L - 1] ? '降至' : '持平於'} ${f1(yA)}%${K.ref ? '，聯準會目標為 2%' : ''}。${K.coreZh}${chg(mC)}，年增 ${f1(yC)}%；核心 3 個月年化 ${f1(ann(IDX[C], 3))}%、6 個月年化 ${f1(ann(IDX[C], 6))}%（前月 6 個月年化 ${f1(val(IDX[C], 'ann6').v[L - 1])}%），${ann(IDX[C], 6) > yC + 0.2 ? '近半年的速度快於過去一年，通膨有再升溫跡象' : ann(IDX[C], 6) < yC - 0.2 ? '近半年的速度慢於過去一年，通膨持續降溫' : '近半年的速度與過去一年相近'}；核心年增率在過去一年大致${trendY(yC, Y(C)[L - 12])}，${yC < yA ? '總體高於核心，差距主要來自能源與食品。' : '總體低於核心，能源與食品壓低了總體。'}</p>
-<p>能源價格${chg(MM(E)[L])}，年增 ${f1(Y(E)[L])}%。食品價格${chg(MM(F)[L])}，年增 ${f1(Y(F)[L])}%。</p>`;
+<p>美國 ${mzh(lm)}${K.zh}季調後${chg(mA)}，前月為 ${f1(MM(A)[L - 1])}%，再前月為 ${f1(MM(A)[L - 2])}%。${yA == null ? `年增率無法計算${yGap}，前月為 ${f1(Y(A)[L - 1])}%` : `年增率由 ${f1(Y(A)[L - 1])}% ${yA > Y(A)[L - 1] ? '升至' : yA < Y(A)[L - 1] ? '降至' : '持平於'} ${f1(yA)}%`}${K.ref ? '，聯準會目標為 2%' : ''}。${K.coreZh}${chg(mC)}，${yz(yC)}；核心 3 個月年化 ${f1(ann(IDX[C], 3))}%、6 個月年化 ${f1(ann(IDX[C], 6))}%（前月 6 個月年化 ${f1(val(IDX[C], 'ann6').v[L - 1])}%）${yC == null ? '。' : `，${ann(IDX[C], 6) > yC + 0.2 ? '近半年的速度快於過去一年，通膨有再升溫跡象' : ann(IDX[C], 6) < yC - 0.2 ? '近半年的速度慢於過去一年，通膨持續降溫' : '近半年的速度與過去一年相近'}`}${trendY(yC, Y(C)[L - 12]) ? `；核心年增率在過去一年大致${trendY(yC, Y(C)[L - 12])}` : ''}${yA == null || yC == null ? '' : yC < yA ? '，總體高於核心，差距主要來自能源與食品。' : '，總體低於核心，能源與食品壓低了總體。'}</p>
+<p>能源價格${chg(MM(E)[L])}，${yz(Y(E)[L])}。食品價格${chg(MM(F)[L])}，${yz(Y(F)[L])}。</p>`;
 if (KIND === 'price') document.getElementById('p2').innerHTML = `
-<p>核心項目中，${nm(IDX[SV])}月增 ${f1(MM(SV)[L])}%，年增 ${f1(Y(SV)[L])}%；其中${K.exZh}${chg(MM(SH)[L])}，年增 ${f1(Y(SH)[L])}%，過去一年${trendY(Y(SH)[L], Y(SH)[L - 12])}。${nm(IDX[GD])}月增 ${sg(MM(GD)[L])}%，年增 ${f1(Y(GD)[L])}%。</p>`;
+<p>核心項目中，${nm(IDX[SV])}月增 ${f1(MM(SV)[L])}%，${yz(Y(SV)[L])}；其中${K.exZh}${chg(MM(SH)[L])}，${yz(Y(SH)[L])}${trendY(Y(SH)[L], Y(SH)[L - 12]) ? `，過去一年${trendY(Y(SH)[L], Y(SH)[L - 12])}` : ''}。${nm(IDX[GD])}月增 ${sg(MM(GD)[L])}%，${yz(Y(GD)[L])}。</p>`;
 
 /* ---------- non-price narratives ---------- */
 const zhn = i => IT[i].zh || nm(i);

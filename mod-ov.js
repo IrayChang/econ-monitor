@@ -309,8 +309,8 @@ function renderKpi(){
   $('#oKpi').innerHTML=KPI.map(id=>{ const ind=IND.find(i=>i.id===id), r=read(ind), t=tone(ind,r), dk=r.dir>0?'up':r.dir<0?'down':'flat';
     const word=r.dir==null?'—':r.dir>0?'上升':r.dir<0?'下降':'持平', nx=nextOf(cal,ind), big=val(ind,ind.trend[r.tt]);
     const z=GROUPS.find(x=>x[0]===ind.g)[1], ch=r.d==null?'':`近 ${ind.q?'2 季':'6 個月'} ${sg(+r.d.toFixed(ind.d)||0,ind.d)}${ind.u==='k'?'k':''}`;
-    return `<button type="button" class="kc" data-src="${ind.src}" aria-label="${esc(`${ind.n} ${ind.tl} ${big}，趨勢${word}，${TONE[t]}，${ch}`)}">
-      <span class="kg">${z}</span><span class="kh"><span class="kn">${esc(ind.n.replace(/（.*）/,''))}</span><span class="ke">${ind.tl}</span></span>
+    return `<button type="button" class="kc" data-src="${ind.src}" aria-label="${esc(`${ind.n} ${ind.tl}${r.tt!==r.tf&&r.perT?'（'+lab(r.perT)+'）':''} ${big}，趨勢${word}，${TONE[t]}，${ch}`)}">
+      <span class="kg">${z}</span><span class="kh"><span class="kn">${esc(ind.n.replace(/（.*）/,''))}</span><span class="ke">${ind.tl}${r.tt!==r.tf&&r.perT?' · '+lab(r.perT):''}</span></span>
       <span class="kbig">${big.replace(/(%|k)$/,'<i>$1</i>')}</span>
       <span class="kd ${t}">${ICON[dk]}<b>${word}</b><span>${ch}</span></span>
       <span class="ks">${ind.fl} ${val(ind,ind.fast[r.tf])} · ${r.per?lab(r.per):''}</span>
