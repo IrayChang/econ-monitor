@@ -56,7 +56,7 @@ function hv(el, o) {
   const W = fitW(el, o.W || 460), H = o.H || 330, pl = 40, pr = 40, pt = 50, pb = 46;
   if (!o.big) refit(el, () => hv(el, o));
   const x0 = pl, x1 = W - pr, y0 = pt, y1 = H - pb;
-  const MO = o.months || M, s = o.start, e = MO.length - 1, n = e - s;
+  const MO = o.months || M, s = o.start, e = o.end ?? MO.length - 1, n = e - s;
   const xw = (x1 - x0) / (n + 1);
   const X = i => x0 + (i - s + 0.5) * xw;
   const axes = {};
@@ -76,24 +76,24 @@ function hv(el, o) {
   for (let v = AL.lo; v <= AL.hi + 1e-9; v += AL.step) {
     const y = AL.Y(v);
     g += `<line x1="${x0}" x2="${x1}" y1="${y}" y2="${y}" stroke="${css('--grid')}"/>`;
-    g += `<text x="${x0 - 5}" y="${y + 3.5}" font-size="10" text-anchor="end" ${dual ? `style="fill:${sideCol('L')}"` : ''}>${fmtT(v, AL.step)}</text>`;
-    if (!dual) g += `<text x="${x1 + 5}" y="${y + 3.5}" font-size="10">${fmtT(v, AL.step)}</text>`;
+    g += `<text x="${x0 - 5}" y="${y + 3.5}" font-size="11" text-anchor="end" ${dual ? `style="fill:${sideCol('L')}"` : ''}>${fmtT(v, AL.step)}</text>`;
+    if (!dual) g += `<text x="${x1 + 5}" y="${y + 3.5}" font-size="11">${fmtT(v, AL.step)}</text>`;
   }
   if (dual) for (let v = axes.R.lo; v <= axes.R.hi + 1e-9; v += axes.R.step)
-    g += `<text x="${x1 + 5}" y="${axes.R.Y(v) + 3.5}" font-size="10" style="fill:${sideCol('R')}">${fmtT(v, axes.R.step)}</text>`;
+    g += `<text x="${x1 + 5}" y="${axes.R.Y(v) + 3.5}" font-size="11" style="fill:${sideCol('R')}">${fmtT(v, axes.R.step)}</text>`;
   if (AL.lo < 0 && AL.hi > 0) g += `<line x1="${x0}" x2="${x1}" y1="${AL.Y(0)}" y2="${AL.Y(0)}" stroke="${css('--axis')}" stroke-width=".8"/>`;
   if (o.ref != null && o.ref > AL.lo && o.ref < AL.hi) g += `<line x1="${x0}" x2="${x1}" y1="${AL.Y(o.ref)}" y2="${AL.Y(o.ref)}" stroke="${css('--axis')}" stroke-dasharray="3 3" stroke-width=".8"/>`;
   for (let i = s; i <= e; i++) if (o.series.every(q => q.v[i] == null) && o.series.some(q => q.v.slice(0, i).some(v => v != null)))
     g += `<rect x="${X(i) - xw / 2}" y="${y0}" width="${xw}" height="${y1 - y0}" fill="${css('--shade')}"/>`;
   // x axis: works for months (YYYY-MM), quarters (YYYY-Qn) and weeks (YYYY-MM-DD)
-  const ppy = perYear(MO[0]), short = n < (ppy === 4 ? 13 : ppy === 52 ? 20 : 30);
+  const ppy = perYear(MO[0]), short = ppy === 52 ? pkey(MO[e]) - pkey(MO[s]) < 9 : n < (ppy === 4 ? 13 : 30);  // dated series (weekly or daily) go by calendar span
   for (let i = s; i <= e; i++) if (yearStart(MO, i))
     g += `<line x1="${X(i) - xw / 2}" x2="${X(i) - xw / 2}" y1="${y1}" y2="${y1 + 5}" stroke="${css('--axis')}"/>`;
   if (short) {
     for (let i = s; i <= e; i++) {
       const sub = subOf(MO[i]), lab = ppy === 52 ? (i === s || subOf(MO[i - 1]) !== sub ? MON[sub - 1] : '') : ppy === 4 ? 'Q' + sub : MON[sub - 1];
-      if (lab && (ppy !== 12 || n < 12 || (sub - 1) % 3 === 0)) g += `<text x="${X(i)}" y="${y1 + 14}" font-size="10" text-anchor="middle">${lab}</text>`;
-      if (yearStart(MO, i) || i === s) g += `<text x="${X(i)}" y="${y1 + 27}" font-size="10" text-anchor="${i === s ? 'start' : 'middle'}" font-weight="700">${MO[i].slice(0, 4)}</text>`;
+      if (lab && (ppy !== 12 || n < 12 || (sub - 1) % 3 === 0)) g += `<text x="${X(i)}" y="${y1 + 14}" font-size="11" text-anchor="middle">${lab}</text>`;
+      if (yearStart(MO, i) || i === s) g += `<text x="${X(i)}" y="${y1 + 27}" font-size="11" text-anchor="${i === s ? 'start' : 'middle'}" font-weight="700">${MO[i].slice(0, 4)}</text>`;
     }
   } else {
     const yrs = [...new Set(MO.slice(s, e + 1).map(m => m.slice(0, 4)))];
@@ -103,7 +103,7 @@ function hv(el, o) {
       if ((yrs.length - 1 - k) % every) return;
       const idx = []; for (let i = s; i <= e; i++) if (MO[i].startsWith(yr)) idx.push(i);
       if (idx.length < ppy / 3) return;
-      g += `<text x="${(X(idx[0]) + X(idx[idx.length - 1])) / 2}" y="${y1 + 15}" font-size="10.5" text-anchor="middle">${yr.slice(2)}</text>`;
+      g += `<text x="${(X(idx[0]) + X(idx[idx.length - 1])) / 2}" y="${y1 + 15}" font-size="11.5" text-anchor="middle">${yr.slice(2)}</text>`;
     });
   }
   // o.hl: { index: label } high-pressure days, shaded when the view is short enough for single days to read
@@ -138,18 +138,18 @@ function hv(el, o) {
   g += `<text x="${W / 2}" y="16" font-size="12.5" text-anchor="middle" style="fill:${css('--ink')}">${esc(o.title)}</text>`;
   g += `<text x="${W / 2}" y="31" font-size="11" text-anchor="middle" style="fill:${css('--ink')}">${esc(o.sub)}</text>`;
   o.series.forEach((q, k) => {
-    const ly = y0 + 12 + k * 13, col = css(q.c);
+    const ly = y0 + 12 + k * 14, col = css(q.c);
     g += o.bar ? `<rect x="${x0 + 7}" y="${ly - 6}" width="12" height="7" fill="${col}"/>`
       : `<line x1="${x0 + 6}" x2="${x0 + 20}" y1="${ly - 3}" y2="${ly - 3}" stroke="${col}" stroke-width="1.6" ${q.dash ? 'stroke-dasharray="4 2.5"' : ''}/>`;
-    g += `<text x="${x0 + 25}" y="${ly}" font-size="10" style="fill:${col}">${esc(q.name)}${q.nsa ? ' (NSA)' : ''}${dual ? ` (${q.axis})` : ''}</text>`;
+    g += `<text x="${x0 + 25}" y="${ly}" font-size="11" style="fill:${col}">${esc(q.name)}${q.nsa ? ' (NSA)' : ''}${dual ? ` (${q.axis})` : ''}</text>`;
   });
-  if (hlOn) { const ly = y0 + 12 + (o.series.length + (o.bands || []).length) * 13;
-    g += `<rect x="${x0 + 6}" y="${ly - 7}" width="14" height="8" fill="${css('--c4')}" fill-opacity=".3"/><text x="${x0 + 25}" y="${ly}" font-size="10">High-pressure days</text>`; }
+  if (hlOn) { const ly = y0 + 12 + (o.series.length + (o.bands || []).length) * 14;
+    g += `<rect x="${x0 + 6}" y="${ly - 7}" width="14" height="8" fill="${css('--c4')}" fill-opacity=".3"/><text x="${x0 + 25}" y="${ly}" font-size="11">High-pressure days</text>`; }
   (o.bands || []).forEach((b, k) => {
-    const ly = y0 + 12 + (o.series.length + k) * 13;
-    g += `<rect x="${x0 + 6}" y="${ly - 7}" width="14" height="8" fill="${css(b.c)}" fill-opacity="${b.op || .18}"/><text x="${x0 + 25}" y="${ly}" font-size="10">${esc(b.name)}</text>`;
+    const ly = y0 + 12 + (o.series.length + k) * 14;
+    g += `<rect x="${x0 + 6}" y="${ly - 7}" width="14" height="8" fill="${css(b.c)}" fill-opacity="${b.op || .18}"/><text x="${x0 + 25}" y="${ly}" font-size="11">${esc(b.name)}</text>`;
   });
-  g += `<text x="${x0 - 30}" y="${H - 4}" font-size="10">Source:  ${o.src || K.src}</text>`;
+  g += `<text x="${x0 - 30}" y="${H - 4}" font-size="11">Source:  ${o.src || K.src}</text>`;
   g += `<line class="xh" y1="${y0}" y2="${y1}" stroke="${css('--axis')}" stroke-width=".6" visibility="hidden"/>`;
   g += `<rect class="hit" x="${x0}" y="${y0}" width="${x1 - x0}" height="${y1 - y0}" fill="transparent"/>`;
   el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.title + ', ' + o.sub)}">${g}</svg><div class="tip"></div>`;
@@ -179,20 +179,43 @@ function hv(el, o) {
 }
 function closeChart() {
   const ov = document.getElementById('hvzoom'); if (!ov || ov.hidden) return;
-  ov.hidden = true; ov.querySelector('.zc').innerHTML = ''; document.body.style.overflow = '';
+  ov.hidden = true; ov.querySelector('.zc').innerHTML = ''; ov.querySelector('.zr').innerHTML = ''; document.body.style.overflow = '';
 }
+// a period label as a number of months, so labels of any frequency can be compared and stepped back
+const pkey = s => /Q\d$/.test(s) ? +s.slice(0, 4) * 12 + +s.slice(-1) * 3 : +s.slice(0, 4) * 12 + +s.slice(5, 7) + (s.length === 10 ? +s.slice(8) / 32 : 0);
 function openChart(o) {
   let ov = document.getElementById('hvzoom');
   if (!ov) {
     ov = document.createElement('div'); ov.id = 'hvzoom'; ov.hidden = true;
-    ov.innerHTML = '<div class="zbox" role="dialog" aria-modal="true" aria-label="放大圖表"><button type="button" class="zx" aria-label="關閉">✕</button><div class="zc"></div></div>';
+    ov.innerHTML = '<div class="zbox" role="dialog" aria-modal="true" aria-label="放大圖表"><button type="button" class="zx" aria-label="關閉">✕</button><div class="zc"></div><div class="zr"></div></div>';
     document.body.appendChild(ov);
     ov.addEventListener('click', ev => { if (ev.target === ov || ev.target.closest('.zx')) closeChart(); });
     addEventListener('keydown', ev => { if (ev.key === 'Escape') closeChart(); });
   }
-  const narrow = innerWidth < 700;
+  const narrow = innerWidth < 700, zc = ov.querySelector('.zc'), zr = ov.querySelector('.zr');
   ov.hidden = false; document.body.style.overflow = 'hidden';
-  hv(ov.querySelector('.zc'), { ...o, W: narrow ? 460 : 900, H: narrow ? 400 : 520, big: true });
+  // free time range: two handles on one track, plus presets counted back from the latest period
+  const MO = o.months || M, N = MO.length - 1;
+  const first = o.series.reduce((a, q) => { const f = q.v.findIndex(v => v != null); return Math.min(a, f < 0 ? N : f); }, N);
+  const lo = Math.max(0, Math.min(first, o.start, N - 2)), st = { s: Math.max(lo, o.start), e: N }, def = st.s;
+  const back = mo => { const cut = pkey(MO[N]) - mo; let i = lo; while (i < N && pkey(MO[i]) <= cut) i++; return i; };
+  const PRE = [['3M', 3], ['6M', 6], ['1Y', 12], ['3Y', 36], ['5Y', 60], ['10Y', 120], ['20Y', 240]].map(([k, mo]) => [k, back(mo)]).filter(([, i]) => i > lo && N - i >= 3);
+  zr.innerHTML = `<div class="zp" role="group" aria-label="期間">${PRE.map(([k, i]) => `<button type="button" data-s="${i}">${k}</button>`).join('')}<button type="button" data-s="${lo}">全部</button><button type="button" class="zd" data-s="${def}">預設</button></div>` +
+    `<div class="zs"><i class="zf"></i><input type="range" class="za" min="${lo}" max="${N}" step="1" aria-label="起點"><input type="range" class="zb" min="${lo}" max="${N}" step="1" aria-label="終點"></div>` +
+    '<div class="zl"><span class="zla"></span><span class="zh">拖曳兩個圓點選取期間</span><span class="zlb"></span></div>';
+  const za = zr.querySelector('.za'), zb = zr.querySelector('.zb'), zf = zr.querySelector('.zf');
+  const at = i => { const p = (i - lo) / Math.max(1, N - lo); return `calc(${(p * 100).toFixed(2)}% + ${(9 - p * 18).toFixed(1)}px)`; };
+  const draw = () => {
+    za.value = st.s; zb.value = st.e;
+    zf.style.left = at(st.s); zf.style.right = `calc(100% - (${at(st.e).slice(5, -1)}))`;
+    zr.querySelector('.zla').textContent = plab(MO[st.s]); zr.querySelector('.zlb').textContent = plab(MO[st.e]);
+    zr.querySelectorAll('.zp button').forEach(b => b.setAttribute('aria-pressed', st.e === N && +b.dataset.s === st.s && !b.classList.contains('zd')));
+    hv(zc, { ...o, W: narrow ? 460 : 900, H: narrow ? 400 : 520, big: true, start: st.s, end: st.e });
+  };
+  za.oninput = () => { st.s = Math.min(+za.value, st.e - 2); draw(); };
+  zb.oninput = () => { st.e = Math.max(+zb.value, st.s + 2); draw(); };
+  zr.querySelector('.zp').onclick = ev => { const b = ev.target.closest('button'); if (!b) return; st.s = +b.dataset.s; st.e = N; draw(); };
+  draw();
   ov.querySelector('.zx').focus();
 }
 

@@ -62,7 +62,7 @@
 #ovapp .tw{overflow:auto;max-height:680px}
 #ovapp table{border-collapse:collapse;width:100%;font-size:12px}
 #ovapp th,#ovapp td{padding:3px 6px;white-space:nowrap;border-bottom:1px solid #15171c}
-#ovapp thead th{position:sticky;top:0;background:var(--panel-2);color:var(--muted);font-weight:500;font-family:var(--f-data);font-size:10.5px;text-align:right;z-index:1;cursor:pointer;user-select:none}
+#ovapp thead th{position:sticky;top:0;background:var(--panel-2);color:var(--muted);font-weight:500;font-family:var(--f-data);font-size:11px;text-align:right;z-index:1;cursor:pointer;user-select:none}
 #ovapp thead th:first-child{text-align:left}
 #ovapp thead th.sorted{color:var(--cmd)}
 #ovapp thead tr.grp th{cursor:default;color:var(--dim);text-align:center;border-bottom:1px solid var(--line)}
@@ -77,7 +77,7 @@
 #ovapp .tog{display:inline-block;width:12px;color:var(--dim);font-family:var(--f-data)}
 #ovapp td.hc{color:var(--fg)}
 #ovapp td.na{color:var(--dim)}
-#ovapp .ls{font-size:10.5px;color:var(--muted);text-align:left}
+#ovapp .ls{font-size:11px;color:var(--muted);text-align:left}
 #ovapp .ls b{font-weight:600}
 #ovapp .ls .L{color:var(--bad)}
 #ovapp .ls .S{color:var(--cool)}
@@ -88,9 +88,9 @@
 #ovapp .det .path{color:var(--dim);font-size:11px;font-family:var(--f-data);text-transform:uppercase;letter-spacing:.04em}
 #ovapp .kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
 #ovapp .kpi{background:var(--bg);padding:6px 8px}
-#ovapp .kpi .k{color:var(--muted);font-size:10.5px;font-family:var(--f-data);text-transform:uppercase}
+#ovapp .kpi .k{color:var(--muted);font-size:11px;font-family:var(--f-data);text-transform:uppercase}
 #ovapp .kpi .v{font-family:var(--f-data);font-size:20px}
-#ovapp .kpi .s{font-family:var(--f-data);font-size:10.5px;color:var(--dim)}
+#ovapp .kpi .s{font-family:var(--f-data);font-size:11px;color:var(--dim)}
 #ovapp .facts{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:12px}
 #ovapp .facts dt{color:var(--muted);font-family:var(--f-data);font-size:11px}
 #ovapp .facts dd{margin:0;font-family:var(--f-data)}
@@ -100,7 +100,7 @@
 #ovapp .axis-zh{fill:var(--muted);font-family:var(--f-zh);font-size:10px}
 #ovapp .gridl{stroke:#1d2026;stroke-width:1}
 #ovapp .zero{stroke:#4a4f58;stroke-width:1}
-#ovapp .vlab{fill:var(--fg);font-family:var(--f-data);font-size:10.5px}
+#ovapp .vlab{fill:var(--fg);font-family:var(--f-data);font-size:11px}
 #ovapp .rlab{fill:var(--fg);font-family:var(--f-ui);font-size:11px}
 #ovapp .rlab.sel{fill:var(--cmd)}
 #ovapp .hit{fill:transparent;cursor:pointer}
@@ -126,7 +126,7 @@
 #ovapp .empty{padding:18px;color:var(--dim);font-family:var(--f-data)}
 @media (prefers-reduced-motion:no-preference){#ovapp .bar{transition:width .25s ease,x .25s ease}}
 #ovapp .treebar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:6px 8px;border-bottom:1px solid var(--line)}
-#ovapp .treebar .lbl{color:var(--dim);font-family:var(--f-data);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em}
+#ovapp .treebar .lbl{color:var(--dim);font-family:var(--f-data);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
 #ovapp .btn{background:var(--panel-2);border:1px solid var(--line);color:var(--fg);font-family:var(--f-data);font-size:11px;padding:3px 8px;cursor:pointer}
 #ovapp .btn:hover{border-color:var(--amber);color:var(--amber)}
 #ovapp .lv{display:inline-flex;border:1px solid var(--line)}
@@ -186,8 +186,8 @@
 #ovapp .ovd{font-family:var(--f-data);font-size:11px;white-space:nowrap}
 #ovapp .ovcv{display:flex;align-items:baseline;gap:10px;padding:2px 9px;flex-wrap:wrap}
 #ovapp .ovcv b{font-family:var(--f-data);font-size:19px;font-weight:500}
-#ovapp .ovcv span{font-family:var(--f-data);font-size:10.5px;color:var(--dim)}
-#ovapp .lblx{fill:var(--fg);font-family:var(--f-zh);font-size:10.5px;paint-order:stroke;stroke:var(--panel);stroke-width:3px}
+#ovapp .ovcv span{font-family:var(--f-data);font-size:11px;color:var(--dim)}
+#ovapp .lblx{fill:var(--fg);font-family:var(--f-zh);font-size:11px;paint-order:stroke;stroke:var(--panel);stroke-width:3px}
 #ovapp .rk.chartbox svg{touch-action:auto}
 #ovapp .summary ul,#ovapp .guide ol{margin:0;padding:10px 14px 12px 30px;display:grid;gap:7px;font-family:var(--f-zh);font-size:13.5px;line-height:1.65}
 #ovapp .summary li::marker,#ovapp .guide li::marker{color:var(--amber)}
@@ -230,7 +230,7 @@
 #ovapp .kp .kpi .s{display:flex;justify-content:space-between;gap:6px}
 #ovapp .pills{display:flex;flex-wrap:wrap;gap:6px}
 #ovapp .pill{border:1px solid var(--line);padding:4px 8px;font-size:12px;font-family:var(--f-zh);display:inline-flex;gap:6px;align-items:center;background:var(--bg)}
-#ovapp .pill .tag{font-family:var(--f-data);font-size:10.5px;padding:0 5px;font-weight:600}
+#ovapp .pill .tag{font-family:var(--f-data);font-size:11px;padding:0 5px;font-weight:600}
 #ovapp .pill .tag.acc{background:var(--up);color:#140606}
 #ovapp .pill .tag.dec{background:var(--down);color:#050b14}
 #ovapp .pill .tag.flat{background:var(--mid);color:var(--fg)}
@@ -258,7 +258,7 @@
 #ovapp .hm th.rh{left:0;z-index:3;text-align:left}
 #ovapp .hm td{padding:0;text-align:center;font-family:var(--f-data);min-width:38px;height:20px;border:0;cursor:pointer;color:var(--fg)}
 #ovapp .hm td.rn{position:sticky;left:0;background:var(--panel);text-align:left;padding:0 8px 0 4px;font-family:var(--f-ui);min-width:220px;max-width:260px;overflow:hidden;text-overflow:ellipsis;z-index:1}
-#ovapp .hm td.rn .zh{font-family:var(--f-zh);color:var(--muted);font-size:10.5px;margin-left:5px}
+#ovapp .hm td.rn .zh{font-family:var(--f-zh);color:var(--muted);font-size:11px;margin-left:5px}
 #ovapp .hm td.na{color:var(--dim)}
 #ovapp .hm tr.d0 td.rn{color:var(--amber);font-weight:600}
 #ovapp .hm tr.d1 td.rn{font-weight:600}
@@ -266,7 +266,7 @@
 #ovapp .hm th.yr{color:var(--amber)}
 #ovapp .hm.dense td:not(.rn){min-width:20px;font-size:0}
 #ovapp .hm.dense th{font-size:10px;padding:3px 0;text-align:left;white-space:nowrap;max-width:20px;overflow:visible}
-#ovapp #sumList li .tag{font-family:var(--f-data);font-size:10.5px;padding:0 5px;margin-right:4px}
+#ovapp #sumList li .tag{font-family:var(--f-data);font-size:11px;padding:0 5px;margin-right:4px}
 #ovapp .dsw{display:inline-flex;flex-wrap:wrap;row-gap:4px;gap:0;max-width:100%;min-width:0}
 #ovapp .dsw .tick{border:1px solid var(--amber);cursor:pointer;background:transparent;color:var(--amber)}
 #ovapp .dsw .tick[aria-pressed="true"]{background:var(--amber);color:var(--amber-ink)}
@@ -280,7 +280,7 @@
 #ovapp .key[data-k]{cursor:pointer}
 #ovapp button:disabled{opacity:.4;cursor:not-allowed}
 /* brief theme for the ported overview */
-#ovapp{color-scheme:light;--bg:#f3f1ec;--panel:#fbfaf7;--panel-2:#f5f2ec;--line:#dfdad1;--fg:#3b3936;--muted:#625d56;--dim:#6f6a62;--amber:#4f6474;--amber-ink:#ffffff;--cmd:#5e7b91;--sel:#efebe3;--up:#b5715a;--down:#5e7b91;--mid:#d4cfc5;--good:#587250;--bad:#9c5b44;--cool:#4f6b85;--good-f:#7b9473;--k1:#5e7b91;--k2:#b5715a;--k3:#7b9473;--k-other:#d4cfc5;--f-data:"Inter","Noto Sans TC",sans-serif;--f-ui:"Inter","Noto Sans TC","PingFang TC",system-ui,sans-serif;--f-zh:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;background:transparent;padding:0;font-size:13.5px}
+#ovapp{color-scheme:light;--bg:#f3f1ec;--panel:#fbfaf7;--panel-2:#f5f2ec;--line:#dfdad1;--fg:#262422;--muted:#5a554e;--dim:#6f6a62;--amber:#3d566a;--amber-ink:#ffffff;--cmd:#5e7b91;--sel:#efebe3;--up:#b5715a;--down:#5e7b91;--mid:#d4cfc5;--good:#587250;--bad:#9c5b44;--cool:#4f6b85;--good-f:#7b9473;--k1:#5e7b91;--k2:#b5715a;--k3:#7b9473;--k-other:#d4cfc5;--f-data:"Inter","Noto Sans TC",sans-serif;--f-ui:"Inter","Noto Sans TC","PingFang TC",system-ui,sans-serif;--f-zh:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;background:transparent;padding:0;font-size:13.5px}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #ovapp{color-scheme:dark;--bg:#1d1c1a;--panel:#262523;--panel-2:#2c2b28;--line:#3a3834;--fg:#e9e5dd;--muted:#aaa497;--dim:#9a948a;--amber:#aec0ce;--amber-ink:#1d1c1a;--cmd:#93acc2;--sel:#2e2c29;--up:#d49c86;--down:#93acc2;--mid:#4a4743;--good:#a6bb9c;--bad:var(--up);--cool:var(--down);--good-f:#a6bb9c;--k1:#93acc2;--k2:#d49c86;--k3:#a6bb9c;--k-other:#4a4743;}}
 :root[data-theme="dark"] #ovapp{color-scheme:dark;--bg:#1d1c1a;--panel:#262523;--panel-2:#2c2b28;--line:#3a3834;--fg:#e9e5dd;--muted:#aaa497;--dim:#9a948a;--amber:#aec0ce;--amber-ink:#1d1c1a;--cmd:#93acc2;--sel:#2e2c29;--up:#d49c86;--down:#93acc2;--mid:#4a4743;--good:#a6bb9c;--bad:var(--up);--cool:var(--down);--good-f:#a6bb9c;--k1:#93acc2;--k2:#d49c86;--k3:#a6bb9c;--k-other:#4a4743;}
 #ovapp .tip{background:var(--panel)!important;box-shadow:0 6px 20px rgba(0,0,0,.15)!important}

@@ -267,16 +267,22 @@ const OV = (DK === 'retail'
   : [[A, 0], [C, 0], [F, 1], [E, 1], [GD, 1], [SV, 1], [SH, 2], [K.sc, 2]]).filter(r => IDX[r[0]] != null);
 const MOM_T = KIND === 'retail' ? 1 : 0.3;
 const momTag = (d, thr) => d == null ? '' : d > thr ? `<span style="color:var(${UPGOOD ? '--c3' : '--c2'})">▲ 加速</span>` : d < -thr ? `<span style="color:var(${UPGOOD ? '--c2' : '--c1'})">▼ ${UPGOOD ? '放緩' : '降溫'}</span>` : '<span class="note">— 持平</span>';
+// the last three months at a glance, oldest to newest, above the Snapshot table
+const k3 = rows => document.getElementById('k3').innerHTML = rows.map(([name, unit, v, f, foot]) =>
+  `<div class="k3c"><div class="k3n">${esc(name)}<span>${unit}</span></div><div class="k3v">${[2, 1, 0].map(b =>
+    `<span${b ? '' : ' class="on"'}><em>${mlab(M[L - b])}</em>${f(v[L - b])}</span>`).join('')}</div><div class="k3f">${foot}</div></div>`).join('');
 if (KIND !== 'nfp') (function drawOverview() {
+  k3(OV.filter(r => !r[1]).slice(0, 3).concat(OV.filter(r => r[1])).slice(0, DK === 'ppi' ? 3 : 2).map(([n]) => { const i = IDX[n], yy = val(i, 'yoy').v[L];
+    return [nm(i), 'M/M, SA, %', val(i, 'mom').v, sg, `Y/Y ${yy == null ? 'n.a.' : f1(yy) + '%'}　3M 年化 ${f1(ann(i, 3))}%`]; }));
   const lb = `${mlab(M[L])} '${M[L].slice(2, 4)}`;
-  let h = `<thead><tr class="grp"><th>${K.long}</th><th></th><th class="vl" colspan="2">M/M, SA</th><th class="vl" colspan="2">Annualized, SA</th><th class="vl" colspan="3">Y/Y</th><th class="vl">Momentum</th><th class="vl">Y/Y, 24 mo.</th></tr>
-<tr><th></th><th>Wt.</th><th class="vl">${lb}</th><th>${mlab(M[L - 1])}</th><th class="vl">3M</th><th>6M</th><th class="vl">${lb}</th><th>${mlab(M[L - 1])}</th><th>${mlab(M[L - 12])} '${M[L - 12].slice(2, 4)}</th><th class="vl"></th><th class="vl"></th></tr></thead><tbody>`;
+  let h = `<thead><tr class="grp"><th>${K.long}</th><th></th><th class="vl" colspan="3">M/M, SA</th><th class="vl" colspan="2">Annualized, SA</th><th class="vl" colspan="3">Y/Y</th><th class="vl">Momentum</th><th class="vl">Y/Y, 24 mo.</th></tr>
+<tr><th></th><th>Wt.</th><th class="vl">${lb}</th><th>${mlab(M[L - 1])}</th><th>${mlab(M[L - 2])}</th><th class="vl">3M</th><th>6M</th><th class="vl">${lb}</th><th>${mlab(M[L - 1])}</th><th>${mlab(M[L - 12])} '${M[L - 12].slice(2, 4)}</th><th class="vl"></th><th class="vl"></th></tr></thead><tbody>`;
   for (const [n, pad] of OV) {
     const i = IDX[n], yy = val(i, 'yoy').v, a3 = ann(i, 3), d = a3 != null && yy[L] != null ? a3 - yy[L] : null;
     const mo = momTag(d, MOM_T), mm = val(i, 'mom').v, sM = heatStat(mm, M, L), sY = heatStat(yy, M, L);
     const hz = (v, st, cls, b) => heatTd(b ? `<b>${f1(v)}</b>` : f1(v), heatZ(v, st), HTONE, cls);
     h += `<tr data-i="${i}"><td style="padding-left:${9 + pad * 14}px"><button type="button" class="nm" data-ov="${i}">${esc(nm(i))}</button></td><td>${IT[i].w != null ? IT[i].w.toFixed(1) : ''}</td>` +
-      hz(mm[L], sM, 'vl') + hz(mm[L - 1], sM) + hz(a3, heatStat(val(i, 'ann3').v, M, L), 'vl') + hz(ann(i, 6), heatStat(val(i, 'ann6').v, M, L)) +
+      hz(mm[L], sM, 'vl', 1) + hz(mm[L - 1], sM) + hz(mm[L - 2], sM) + hz(a3, heatStat(val(i, 'ann3').v, M, L), 'vl') + hz(ann(i, 6), heatStat(val(i, 'ann6').v, M, L)) +
       hz(yy[L], sY, 'vl', 1) + hz(yy[L - 1], sY) + hz(yy[L - 12], sY) + `<td class="vl" style="text-align:left">${mo}</td><td class="vl" style="padding:2px 9px">${spark(yy)}</td></tr>`;
   }
   const el = document.getElementById('ovt');
@@ -320,16 +326,19 @@ if (KIND === 'nfp') {
 <p>產業別中增加最多的是${mv.up.map(([i, v]) => `${zhn(i)}（${sgk(v)}）`).join('、')}${mv.dn.length ? `；減少最多的是${mv.dn.map(([i, v]) => `${zhn(i)}（${sgk(v)}）`).join('、')}` : ''}。</p>`;
   document.getElementById('p2').innerHTML = `<p>家計調查方面，失業率 ${lv(U)[L].toFixed(1)}%（前月 ${lv(U)[L - 1].toFixed(1)}%，${lv(U)[L - 12] != null ? `一年前 ${lv(U)[L - 12].toFixed(1)}%` : '一年前無資料'}），25–54 歲就業人口比 ${lv('Employment-population ratio, 25-54 yrs')[L].toFixed(1)}%，勞參率 ${lv('Labor force participation rate')[L].toFixed(1)}%。平均時薪年增 ${f1(Y(AH)[L])}%，月增 ${f1(MM(AH)[L])}%。</p>`;
   document.getElementById('ovHow').textContent = `動能＝近 3 個月平均新增就業相對 12 個月平均：高出四分之一以上為加速（綠），低四分之一以上為放緩（紅）。點列可在 Components 拆開該產業。`;
+  k3([[nm(IDX[A]), 'M/M change, thous.', dk(IDX[A]), sgk, `3M 平均 ${sgk(dk3(IDX[A])[L])}　12M 平均 ${sgk(a12(IDX[A]))}`],
+    [nm(IDX[C]), 'M/M change, thous.', dk(IDX[C]), sgk, `3M 平均 ${sgk(dk3(IDX[C])[L])}`],
+    [nm(IDX[U]), 'Level, %', lv(U), v => v == null ? 'n.a.' : v.toFixed(1), lv(U)[L - 12] != null ? `一年前 ${lv(U)[L - 12].toFixed(1)}%` : '']]);
   const OVN = [[A, 0], [C, 1], ['Goods-producing', 2], ['Construction', 3], ['Manufacturing', 3], ['Private service-providing', 2], ['Health care and social assistance', 3], ['Leisure and hospitality', 3], ['Professional and business services', 3], ['Government', 1]].filter(r => IDX[r[0]] != null);
   const lb = `${mlab(M[L])} '${M[L].slice(2, 4)}`;
-  let h = `<thead><tr class="grp"><th>Nonfarm Payrolls (thous.)</th><th></th><th class="vl" colspan="2">Change</th><th class="vl" colspan="3">Avg. monthly change</th><th class="vl">Y/Y</th><th class="vl">Momentum</th><th class="vl">3M avg. chg, 24 mo.</th></tr>
-<tr><th></th><th>Level</th><th class="vl">${lb}</th><th>${mlab(M[L - 1])}</th><th class="vl">3M</th><th>6M</th><th>12M</th><th class="vl">%</th><th class="vl"></th><th class="vl"></th></tr></thead><tbody>`;
+  let h = `<thead><tr class="grp"><th>Nonfarm Payrolls (thous.)</th><th></th><th class="vl" colspan="3">Change</th><th class="vl" colspan="3">Avg. monthly change</th><th class="vl">Y/Y</th><th class="vl">Momentum</th><th class="vl">3M avg. chg, 24 mo.</th></tr>
+<tr><th></th><th>Level</th><th class="vl">${lb}</th><th>${mlab(M[L - 1])}</th><th>${mlab(M[L - 2])}</th><th class="vl">3M</th><th>6M</th><th>12M</th><th class="vl">%</th><th class="vl"></th><th class="vl"></th></tr></thead><tbody>`;
   for (const [n, pad] of OVN) {
     const i = IDX[n], a3 = dk3(i)[L], s6 = D.sa[i][L - 6] != null ? (D.sa[i][L] - D.sa[i][L - 6]) / 6 : null, b12 = a12(i);
     const d = a3 != null && b12 != null ? a3 - b12 : null, thr = Math.max(5, Math.abs(b12 || 0) * 0.25);
     const s1 = heatStat(dk(i), M, L), s3 = heatStat(dk3(i), M, L), hz = (v, st, f, cls) => heatTd(f(v), heatZ(v, st), 'good', cls);
     h += `<tr><td style="padding-left:${9 + pad * 14}px"><button type="button" class="nm" data-ov="${i}">${esc(nm(i))}</button></td><td>${fk(D.sa[i][L])}</td>` +
-      hz(dk(i)[L], s1, v => `<b>${sgk(v)}</b>`, 'vl') + hz(dk(i)[L - 1], s1, sgk) + hz(a3, s3, sgk, 'vl') + hz(s6, s3, sgk) + hz(b12, s3, sgk) + hz(Y(n)[L], heatStat(Y(n), M, L), f1, 'vl') +
+      hz(dk(i)[L], s1, v => `<b>${sgk(v)}</b>`, 'vl') + hz(dk(i)[L - 1], s1, sgk) + hz(dk(i)[L - 2], s1, sgk) + hz(a3, s3, sgk, 'vl') + hz(s6, s3, sgk) + hz(b12, s3, sgk) + hz(Y(n)[L], heatStat(Y(n), M, L), f1, 'vl') +
       `<td class="vl" style="text-align:left">${momTag(d, thr)}</td><td class="vl" style="padding:2px 9px">${spark(dk3(i))}</td></tr>`;
   }
   const el = document.getElementById('ovt'); el.innerHTML = h + '</tbody>';
