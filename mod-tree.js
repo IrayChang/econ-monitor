@@ -242,9 +242,13 @@ const HD = document.getElementById('hd');
 const verb = (v, p) => v > p + 0.05 ? '加速至' : v < p - 0.05 ? '放緩至' : '持平於';
 const chg = v => v == null ? '資料缺' : Math.abs(v) < 0.05 ? '持平' : (v > 0 ? '上漲 ' : '下跌 ') + f1(Math.abs(v)) + '%';
 const E = K.energy, F = K.food, SV = K.svc, GD = K.goods, SH = K.ex;
+// PPI items BEA uses in place of CPI when it builds PCE prices (the reason markets read PPI); portfolio management follows stock prices
+const PPI_SVC = 'Final demand services less trade, transportation, and warehousing';
+const PCE_IN = [['Portfolio management', '資產管理費'], ['Airline passenger services', '機票'], ['Hospital outpatient care', '醫院門診'], ['Physician care', '醫師'],
+  ['Hospital inpatient care', '醫院住院'], ['Health and medical insurance', '健康保險']].filter(([n]) => IDX[n] != null);
 document.getElementById('dt').textContent = D.pub ? fmtDate(D.pub) : `Data through ${mlab(lm)} ${lm.slice(0, 4)}`;
 if (KIND === 'price') HD.textContent =
-  `美國 ${+lm.slice(5)} 月 ${K.tab} ${mA >= 0 ? '上漲' : '下跌'} ${f1(Math.abs(mA))}%，${MM(E)[L] > 1 ? '能源推升總體，' : MM(E)[L] < -1 ? '能源拉低總體，' : ''}核心${verb(mC, MM(C)[L - 1])} ${f1(mC)}%`;
+  `美國 ${+lm.slice(5)} 月 ${K.tab} ${mA >= 0 ? '上漲' : '下跌'} ${f1(Math.abs(mA))}%，${MM(E)[L] > 1 ? '能源推升總體，' : MM(E)[L] < -1 ? '能源拉低總體，' : ''}${verb(mC, MM(C)[L - 1]) === '持平於' ? `核心連續兩個月${chg(mC)}` : `核心月增${verb(mC, MM(C)[L - 1])} ${f1(mC)}%`}`;
 document.getElementById('note').textContent = KIND !== 'price' ? `${K.srcNote}${K.wNote}${KIND === 'nfp' ? '堆疊圖的貢獻是各產業就業人數的變動（千人），加總等於上層的變動；' : '堆疊圖的貢獻加總等於上層的變動；'}細項加總與上層的差額列為 Other / residual。` : `${K.srcNote}月變動與年化為季節調整後數字${D.nsa.some((x, i) => x !== D.sa[i]) ? '（無季調序列的項目改用未季調，標示 NSA），年增與年度平均變動為未季調數字' : ''}。${K.wNote}堆疊圖的貢獻＝細項變動 × 細項權重 ÷ 上層權重；細項加總與上層的差額列為 Other / residual。`;
 document.getElementById('nItems').textContent = IT.length;
 const since = (arr, v) => { for (let i = L - 1; i >= 0; i--) if (arr[i] != null && arr[i] >= v) return M[i]; return null; };
@@ -295,9 +299,13 @@ const trendY = (v, p) => v == null || p == null ? null : Math.abs(v - p) < 0.3 ?
 const yz = v => v == null ? '年增率無法計算' : `年增 ${f1(v)}%`;
 const yGap = yA == null ? `（${mzh(M[L - 12])}無官方指數）` : '';
 if (KIND === 'price') document.getElementById('p1').innerHTML = `
-<p>美國 ${mzh(lm)}${K.zh}季調後${chg(mA)}，前月為 ${f1(MM(A)[L - 1])}%，再前月為 ${f1(MM(A)[L - 2])}%。${yA == null ? `年增率無法計算${yGap}，前月為 ${f1(Y(A)[L - 1])}%` : `年增率由 ${f1(Y(A)[L - 1])}% ${yA > Y(A)[L - 1] ? '升至' : yA < Y(A)[L - 1] ? '降至' : '持平於'} ${f1(yA)}%`}${K.ref ? '，聯準會目標為 2%' : ''}。${K.coreZh}${chg(mC)}，${yz(yC)}；核心 3 個月年化 ${f1(ann(IDX[C], 3))}%、6 個月年化 ${f1(ann(IDX[C], 6))}%（前月 6 個月年化 ${f1(val(IDX[C], 'ann6').v[L - 1])}%）${yC == null ? '。' : `，${ann(IDX[C], 6) > yC + 0.2 ? '近半年的速度快於過去一年，通膨有再升溫跡象' : ann(IDX[C], 6) < yC - 0.2 ? '近半年的速度慢於過去一年，通膨持續降溫' : '近半年的速度與過去一年相近'}`}${trendY(yC, Y(C)[L - 12]) ? `；核心年增率在過去一年大致${trendY(yC, Y(C)[L - 12])}` : ''}${yA == null || yC == null ? '' : yC < yA ? '，總體高於核心，差距主要來自能源與食品。' : '，總體低於核心，能源與食品壓低了總體。'}</p>
+<p>美國 ${mzh(lm)}${K.zh}季調後${chg(mA)}，前月為 ${f1(MM(A)[L - 1])}%，再前月為 ${f1(MM(A)[L - 2])}%。${yA == null ? `年增率無法計算${yGap}，前月為 ${f1(Y(A)[L - 1])}%` : `年增率由 ${f1(Y(A)[L - 1])}% ${yA > Y(A)[L - 1] ? '升至' : yA < Y(A)[L - 1] ? '降至' : '持平於'} ${f1(yA)}%`}${K.ref ? '，聯準會目標為 2%' : ''}。${K.coreZh}${chg(mC)}，${yz(yC)}；核心 3 個月年化 ${f1(ann(IDX[C], 3))}%、6 個月年化 ${f1(ann(IDX[C], 6))}%（前月 6 個月年化 ${f1(val(IDX[C], 'ann6').v[L - 1])}%）${yC == null ? '。' : `，${ann(IDX[C], 6) > yC + 0.2 ? '近半年的速度快於過去一年，通膨有再升溫跡象' : ann(IDX[C], 6) < yC - 0.2 ? '近半年的速度慢於過去一年，通膨持續降溫' : '近半年的速度與過去一年相近'}`}${trendY(yC, Y(C)[L - 12]) ? `；核心年增率在過去一年大致${trendY(yC, Y(C)[L - 12])}` : ''}${yA == null || yC == null ? '' : DK === 'ppi' ? `，總體${yC < yA ? '高於' : '低於'}核心，差距來自能源（${yz(Y(E)[L])}）、食品（${yz(Y(F)[L])}）與貿易服務（${yz(Y(SH)[L])}）。` : yC < yA ? '，總體高於核心，差距主要來自能源與食品。' : '，總體低於核心，能源與食品壓低了總體。'}</p>
 <p>能源價格${chg(MM(E)[L])}，${yz(Y(E)[L])}。食品價格${chg(MM(F)[L])}，${yz(Y(F)[L])}。</p>`;
-if (KIND === 'price') document.getElementById('p2').innerHTML = `
+const pm = v => v == null ? 'n.a.' : Math.abs(v) < 0.05 ? '0.0%' : (v > 0 ? '+' : '−') + Math.abs(v).toFixed(1) + '%';
+if (DK === 'ppi') document.getElementById('p2').innerHTML = `
+<p>進入核心 PCE 的分項（BEA 計算 PCE 時這幾項用 PPI，不用 CPI），月增率（括號內為前月）：${PCE_IN.map(([n, z]) => `${z}${val(IDX[n], 'mom').nsa ? '（未季調）' : ''} ${pm(MM(n)[L])}（${pm(MM(n)[L - 1])}）`).join('、')}。${PCE_IN.some(([n]) => n === 'Portfolio management') ? '資產管理費隨股價變動，不代表一般物價，估算核心 PCE 時通常另外看待。' : ''}</p>
+<p>商品（排除食品與能源）月增 ${pm(MM(GD)[L])}，${yz(Y(GD)[L])}，是關稅與原物料成本最先反映的地方；服務（排除貿易、運輸與倉儲）月增 ${pm(MM(PPI_SVC)[L])}，${yz(Y(PPI_SVC)[L])}。${K.exZh}${chg(MM(SH)[L])}，這項是批發與零售的毛利，每月波動大、常在下個月反轉，單月不宜解讀。</p>`;
+else if (KIND === 'price') document.getElementById('p2').innerHTML = `
 <p>核心項目中，${nm(IDX[SV])}月增 ${f1(MM(SV)[L])}%，${yz(Y(SV)[L])}；其中${K.exZh}${chg(MM(SH)[L])}，${yz(Y(SH)[L])}${trendY(Y(SH)[L], Y(SH)[L - 12]) ? `，過去一年${trendY(Y(SH)[L], Y(SH)[L - 12])}` : ''}。${nm(IDX[GD])}月增 ${sg(MM(GD)[L])}%，${yz(Y(GD)[L])}。</p>`;
 
 /* ---------- non-price narratives ---------- */
@@ -315,6 +323,50 @@ if (KIND === 'retail') {
 <p>本月拉動最多的是${mv.slice(0, 3).map(([i, v]) => `${zhn(i)}（${v >= 0 ? '+' : ''}${v.toFixed(2)} 個百分點）`).join('、')}；拖累最多的是${mv.slice(-2).reverse().map(([i, v]) => `${zhn(i)}（${v.toFixed(2)}）`).join('、')}。這些是名目金額，物價上漲也會推高銷售。</p>`;
   document.getElementById('p2').innerHTML = `<p>電商（非店面零售）年增 ${f1(Y('Nonstore retailers (e-commerce)')[L])}%，餐飲年增 ${f1(Y('Food services and drinking places')[L])}%；汽車經銷商年增 ${f1(Y('Motor vehicle and parts dealers')[L])}%，加油站年增 ${f1(Y('Gasoline stations')[L])}%（主要反映油價）。</p>`;
   document.getElementById('ovHow').textContent = `動能＝3 個月年化相對年增：高出 1 個百分點以上為加速（綠），低 1 以上為放緩（紅）。點列可在 Components 拆開該項目。`;
+  // ---------- what to watch: noise, revisions, prices, the GDP quarter ----------
+  (function watch() {
+    const AX = 'Total ex motor vehicles and parts', AG = 'Total ex autos and gasoline', FS = 'Food services and drinking places', GS = 'Gasoline stations', MV = 'Motor vehicle and parts dealers';
+    const se = D.se || {}, pv = D.prev, rl = D.real, lv = n => D.sa[IDX[n]], pp = v => v == null ? 'n.a.' : Math.abs(v) < 0.05 ? '0.0%' : (v > 0 ? '+' : '−') + Math.abs(v).toFixed(1) + '%';
+    const pct = (a, b) => a == null || b == null || !b ? null : (a / b - 1) * 100;
+    const rows = [];
+    // 1. statistical noise: Census's own 90% confidence interval for the month-to-month change
+    const sig = n => { const s = (se[n] || {})[lm], c = MM(n)[L]; if (s == null || c == null) return `${pp(c)}（Census 未提供標準誤）`;
+      const h = 1.645 * s; return `${pp(c)}，90% 信賴區間 ±${h.toFixed(1)}%：${Math.abs(c) > h ? '<b>統計上顯著</b>' : '<b>不顯著</b>（無法排除實際為零）'}`; };
+    rows.push(['單月變動是否顯著', `總額 ${sig(A)}<br>扣除汽車 ${sig(AX)}<br>扣除汽車與汽油 ${sig(AG)}`,
+      '初值（advance）只用部分樣本。Census 公布每月變動的標準誤，變動小於信賴區間時，單月漲跌可能只是抽樣誤差，要看 3 個月趨勢。']);
+    // 2. revisions to the earlier months (the previous vintage is kept by the refresh)
+    if (pv && pv.v && pv.v[A] && pv.release === M[L - 1]) {
+      const ms = Object.keys(pv.v[A]).sort(), t = L - 1;
+      const rv = n => { const o = pv.v[n] || {}, cur = lv(n);
+        return { old: pct(o[ms[1]], o[ms[0]]), now: MM(n)[t], lvl: pct(cur[t], o[ms[1]]), eff: pct(cur[L], o[ms[1]]) }; };
+      const line = (n, lab) => { const r = rv(n); return `${lab}：${mzh(ms[1])}月增由 ${pp(r.old)} 修正為 ${pp(r.now)}，水準${r.lvl >= 0 ? '上修' : '下修'} ${Math.abs(r.lvl).toFixed(1)}%；本月水準相對前次公布的 ${+ms[1].slice(5)} 月 ${pp(r.eff)}`; };
+      rows.push(['前月修正', `${line(A, '總額')}<br>${line(C, '控制組')}`,
+        '市場常只看本月月增，但前月上修或下修會改變水準。「相對前次公布」把本月與修正合在一起，才是這份報告實際帶來的新資訊。']);
+    } else rows.push(['前月修正', '前一版數據未保留，下次公布時起才能比較。', '初值在下個月會用完整樣本修正。']);
+    // 3. prices: these are nominal dollars; deflate each store type by its CPI items
+    if (rl && rl[A]) {
+      const ra = rl[A], rc = rl[C], ok = ra[L] != null, yr = (a, b) => a[L - 12] == null ? `年增無法計算（${mzh(M[L - 12])}無官方 CPI）` : `年增 ${pp(pct(a[L], a[L - 12]))}`;
+      rows.push(['扣除物價後（實質）', ok ? `總額 月增 ${pp(pct(ra[L], ra[L - 1]))}（名目 ${pp(mA)}），${yr(ra)}<br>控制組 月增 ${pp(pct(rc[L], rc[L - 1]))}（名目 ${pp(mC)}），${yr(rc)}`
+        : `${mzh(lm)} CPI 尚未公布，暫無實質值。`,
+        '零售銷售是名目金額，油價或關稅推高商品價格時，銷售增加不代表買得更多。本站以各店別對應的 CPI 項目平減（例：加油站用汽油 CPI、餐飲用外食 CPI），屬估算，非官方實質數據。']);
+    }
+    // 4. the GDP quarter: control group average so far this quarter vs last quarter, annualized
+    const qtd = a => { if (!a) return null; const y = +lm.slice(0, 4), q = Math.floor((+lm.slice(5) - 1) / 3), st = M.indexOf(`${y}-${String(q * 3 + 1).padStart(2, '0')}`);
+      if (st < 6) return null; const avg = x => x.some(v => v == null) ? null : x.reduce((s, v) => s + v, 0) / x.length;
+      const c = avg(a.slice(st, L + 1)), p = avg(a.slice(st - 3, st)), p2 = avg(a.slice(st - 6, st - 3));
+      return c == null || p == null ? null : { q: q + 1, n: L - st + 1, v: (Math.pow(c / p, 4) - 1) * 100, prev: p2 == null ? null : (Math.pow(p / p2, 4) - 1) * 100 }; };
+    const qn = qtd(D.sa[IDX[C]]), qr = qtd(rl && rl[C]);
+    if (qn) rows.push([`控制組：第 ${qn.q} 季至今`, `名目 ${pp(qn.v)}${qr ? `、實質 ${pp(qr.v)}` : ''}（年化，已有 ${qn.n} 個月，對上一季平均）<br>上一季：名目 ${pp(qn.prev)}${qr && qr.prev != null ? `、實質 ${pp(qr.prev)}` : ''}`,
+      'BEA 估算 GDP 的商品消費主要依據零售銷售，市場以控制組（排除汽車、加油站、建材與餐飲）作為代表。季平均比單月更接近 GDP 的算法，季中只有一兩個月時，後面月份仍會改變結果。']);
+    // 5. what the excluded pieces say
+    rows.push(['被排除的項目', `餐飲 ${pp(MM(FS)[L])}（年增 ${pp(Y(FS)[L])}）<br>汽車經銷商 ${pp(MM(MV)[L])}、加油站 ${pp(MM(GS)[L])}`,
+      '餐飲是零售銷售裡唯一的服務類，最能反映可自由支配的支出，景氣轉弱時通常先降。汽車跟著車價與促銷大幅波動；加油站主要跟著油價。其他服務（房租、醫療、旅遊）不在零售銷售內，占消費的大部分。']);
+    const host = document.createElement('div');
+    host.innerHTML = `<h2 class="sec">What to watch</h2><p class="how">零售銷售每月約 15 日由 Census 公布（美東 8:30），是當月最早的消費數據。下表依序列出解讀這份報告時最該看的地方。</p>
+<div class="tblw"><table class="watch"><thead><tr><th>觀察重點</th><th>${mzh(lm)}</th><th>為什麼重要</th></tr></thead><tbody>${rows.map(r => `<tr><td><b>${r[0]}</b></td><td style="text-align:left">${r[1]}</td><td style="text-align:left;white-space:normal" class="note">${r[2]}</td></tr>`).join('')}</tbody></table></div>
+<p class="note">資料來源：Census Bureau（Advance Monthly Retail Trade Survey，標準誤取自同一檔案）；實質值以 BLS CPI 平減，基期 ${rl ? mzh(rl.base) : 'n.a.'}。${pv ? `前次公布數據保存於 ${pv.as_of || ''}。` : ''}</p>`;
+    const p2 = document.getElementById('p2'); p2.parentNode.insertBefore(host, p2.nextSibling);
+  })();
 }
 if (KIND === 'nfp') {
   const dk = i => val(i, 'dk').v, dk3 = i => val(i, 'dk3').v, a12 = i => { const v = D.sa[i]; return v[L] != null && v[L - 12] != null ? (v[L] - v[L - 12]) / 12 : null; };
@@ -657,9 +709,12 @@ const I = n => IDX[n];
 const DEF = KIND === 'price' ? {
   ch1: { title: K.long, m: 'yoy', r: 'Max', ref: 1, ids: [{ i: I(A), ax: 'L' }, { i: I(C), ax: 'L' }] },
   ch2: { title: K.long, m: 'mom', r: '2Y', ids: [{ i: I(A), ax: 'L' }, { i: I(C), ax: 'L' }] },
-  ch3: { title: `${K.tab}: Core Goods vs. Core Services`, m: 'yoy', r: 'Max', ids: [{ i: I(SV), ax: 'L' }, { i: I(GD), ax: 'L' }, { i: I(SH), ax: 'L', dash: 1 }] },
-  ch4: { title: `${K.tab}: Energy & Food`, m: 'yoy', r: 'Max', ids: [{ i: I(E), ax: 'L' }, { i: I(F), ax: 'R' }] },
-  ch5: { title: '', m: 'yoy', r: '5Y', ref: 1, W: 900, H: 360, ids: [{ i: I(SH), ax: 'L' }, { i: parentOf(I(SH)), ax: 'L' }] }
+  // PPI: trade services (margins) are noise, so core services drop them; ch4 shows the PPI items BEA uses for PCE instead of energy and food
+  ch3: DK === 'ppi' ? { title: 'PPI: Core Goods vs. Core Services', m: 'yoy', r: 'Max', ids: [{ i: I(PPI_SVC), ax: 'L' }, { i: I(GD), ax: 'L' }] }
+    : { title: `${K.tab}: Core Goods vs. Core Services`, m: 'yoy', r: 'Max', ids: [{ i: I(SV), ax: 'L' }, { i: I(GD), ax: 'L' }, { i: I(SH), ax: 'L', dash: 1 }] },
+  ch4: DK === 'ppi' ? { title: 'PPI Items That Feed Core PCE', m: 'mom', r: '6M', ids: PCE_IN.slice(0, 4).map(([n]) => ({ i: I(n), ax: 'L' })) }
+    : { title: `${K.tab}: Energy & Food`, m: 'yoy', r: 'Max', ids: [{ i: I(E), ax: 'L' }, { i: I(F), ax: 'R' }] },
+  ch5: { title: '', m: 'yoy', r: '5Y', ref: 1, W: 900, H: 360, ids: [{ i: I(DK === 'ppi' ? GD : SH), ax: 'L' }, { i: parentOf(I(DK === 'ppi' ? GD : SH)), ax: 'L' }] }
 } : KIND === 'retail' ? {
   ch1: { title: 'Retail Sales', m: 'yoy', r: '5Y', ids: [{ i: I(A), ax: 'L' }, { i: I(C), ax: 'L' }] },
   ch2: { title: 'Retail Sales', m: 'mom', r: '2Y', ids: [{ i: I(A), ax: 'L' }, { i: I(C), ax: 'L' }] },

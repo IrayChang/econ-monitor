@@ -62,15 +62,32 @@ const lastOn = (a, t) => { for (let j = t; j >= 0; j--) if (a[j] != null) return
 
 document.getElementById('dt').textContent = `Week ending ${fmtDate(WK[LW])} · Daily to ${fmtDate(DY[LD])}`;
 const tS = lastOn(SOFR, LD), sp = S_IORB[tS];
-document.getElementById('hd').textContent = `聯準會總資產 ${tn(WALCL[LW])} 兆美元，準備金 ${tn(RES[LW])} 兆，SOFR ${sp > 0 ? '高於' : sp < 0 ? '低於' : '等於'} IORB ${Math.abs(sp)} bp`;
+document.getElementById('hd').textContent = `銀行準備金 ${tn(RES[LW])} 兆美元，聯準會總資產 ${tn(WALCL[LW])} 兆，SOFR ${sp > 0 ? '高於' : sp < 0 ? '低於' : '等於'} IORB ${Math.abs(sp)} bp`;
 
 // narrative: balance sheet, liabilities, rates ($ bn shown as 億美元: 1 bn = 10 億)
 (function lede() {
   const y = v => v == null ? 'n.a.' : `${fb(Math.abs(v) * 10)} 億美元`, ud = v => v < 0 ? '減少' : '增加';
-  const q13 = chg(UST, 13)[LW] / 3, b13 = chg(BILLS, 13)[LW] / 3, m13 = chg(MBS, 13)[LW] / 3, r4 = chg(RES, 4)[LW], g4 = chg(TGAW, 4)[LW], w1 = chg(WALCL, 1)[LW];
+  const q13 = chg(UST, 13)[LW] / 3, b13 = chg(BILLS, 13)[LW] / 3, m13 = chg(MBS, 13)[LW] / 3, a13 = chg(WALCL, 13)[LW] / 3;
   const tE = lastOn(EFFR, LD), tR = lastOn(RRP, LD), tF = lastOn(SRF, LD), s20 = S_IORB.slice(tS - 19, tS + 1).filter(v => v != null), a20 = Math.round(s20.reduce((a, b) => a + b, 0) / s20.length);
-  document.getElementById('lp1').innerHTML = `<p>截至 ${fmtDate(WK[LW])}，聯準會總資產 ${tn(WALCL[LW])} 兆美元，較前週${ud(w1)} ${y(w1)}；其中公債 ${tn(UST[LW])} 兆、MBS ${tn(MBS[LW])} 兆。過去 13 週平均每月公債${ud(q13)} ${y(q13)}、MBS ${ud(m13)} ${y(m13)}；其中國庫券（T-bill）持有 ${fb(BILLS[LW] * 10)} 億美元，每月${ud(b13)} ${y(b13)}${b13 > 0 && q13 > 0 ? '。公債增加以國庫券為主，來自 MBS 到期資金轉投資國庫券，以及聯準會為維持準備金充足而進行的準備金管理購買（RMP）；縮表已停止，資產負債表轉為隨準備金需求擴張' : ''}。</p>
-<p>負債端：銀行準備金 ${tn(RES[LW])} 兆美元，4 週${ud(r4)} ${y(r4)}；財政部 TGA ${tn(TGAW[LW])} 兆，4 週${ud(g4)} ${y(g4)}。TGA 增加會把資金從銀行體系抽走，壓低準備金。ON RRP 只剩 ${y(RRP[tR])}（${fmtDate(DY[tR])}），先前緩衝縮表的閒置資金已幾乎用完，TGA 的波動現在直接反映在準備金上。</p>
+  // reserves move with the other side of the balance sheet: assets add, TGA, reverse repo (incl. foreign official) and currency drain
+  const drv = k => { const dA = chg(WALCL, k)[LW], dG = chg(TGAW, k)[LW], dR = chg(w('RRPW'), k)[LW], dC = chg(CURR, k)[LW], dRes = chg(RES, k)[LW];
+    const parts = [['資產', dA], ['TGA', dG == null ? null : -dG], ['逆回購', dR == null ? null : -dR], ['流通貨幣', dC == null ? null : -dC]].filter(p => p[1] != null);
+    const oth = parts.length === 4 && dRes != null ? dRes - parts.reduce((s, p) => s + p[1], 0) : null;
+    const all = oth == null ? parts : parts.concat([['其他負債項目', oth]]), by = s => all.filter(p => Math.sign(p[1]) === s).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))[0];
+    return { dRes, parts, oth, top: dRes == null ? null : by(Math.sign(dRes)), off: dRes == null ? null : by(-Math.sign(dRes)) }; };
+  const r1 = drv(1), r4 = drv(4), sy = v => `${v < 0 ? '−' : '+'}${y(v)}`;
+  const brk = r => r.parts.map(([n, v]) => `${n} ${sy(v)}`).join('、') + (r.oth != null && Math.abs(r.oth) >= 5 ? `、其他 ${sy(r.oth)}` : '');
+  // under $25 bn is well inside the usual weekly swing in reserves; otherwise name the largest item moving the same way, and an offset that ate half of it
+  const why = r => { if (!r.top || r.dRes == null) return ''; if (Math.abs(r.dRes) < 25) return '，在準備金平常的單週波動範圍內';
+    const n = r.top[0] === 'TGA' ? '財政部帳戶（TGA）的收支，屬暫時性波動，不是聯準會政策的變化' : r.top[0] === '資產' ? '聯準會資產的變化' : r.top[0];
+    return `，主要來自${n}${r.off && Math.abs(r.off[1]) >= Math.abs(r.top[1]) / 2 ? `，部分被${r.off[0]}抵銷` : ''}`; };
+  // bills bought beyond the MBS paydowns are purchases on top of reinvestment (reserve management purchases); $5 bn a month tolerance for timing
+  const xb = b13 == null || m13 == null ? null : b13 + Math.min(m13, 0);
+  const bal = xb == null ? '' : b13 > 0 && Math.abs(xb) < 5 ? `國庫券增加大致等於 MBS 到期金額，屬於 MBS 到期資金轉投資國庫券，資產負債表規模大致持平；沒有額外的準備金管理購買（RMP）`
+    : b13 > 0 && xb >= 5 ? `國庫券增加超過 MBS 到期金額，每月多出約 ${y(xb)}，即 MBS 再投資以外的購買（如準備金管理購買 RMP），資產負債表隨準備金需求擴張`
+    : a13 < -5 ? '資產負債表仍在縮減' : '';
+  document.getElementById('lp1').innerHTML = `<p>截至 ${fmtDate(WK[LW])}，銀行準備金 ${tn(RES[LW])} 兆美元，較前週${ud(r1.dRes)} ${y(r1.dRes)}（${brk(r1)}）${why(r1)}。過去 4 週${ud(r4.dRes)} ${y(r4.dRes)}（${brk(r4)}）${why(r4)}。財政部 TGA 為 ${tn(TGAW[LW])} 兆；繳稅日與公債交割日 TGA 上升會把資金從銀行體系抽走，單週數百億美元的準備金波動多半由此而來。ON RRP（不含外國官方）只剩 ${y(RRP[tR])}（${fmtDate(DY[tR])}），先前的閒置資金緩衝已幾乎用完，TGA 的波動現在直接反映在準備金上。</p>
+<p>資產端：聯準會總資產 ${tn(WALCL[LW])} 兆美元，過去 13 週平均每月${ud(a13)} ${y(a13)}；公債 ${tn(UST[LW])} 兆（其中國庫券 ${fb(BILLS[LW] * 10)} 億美元，每月${ud(b13)} ${y(b13)}）、MBS ${tn(MBS[LW])} 兆（每月${ud(m13)} ${y(m13)}）。${bal}${bal ? '。' : ''}</p>
 <p>利率：${fmtDate(DY[tS])} SOFR ${f2(SOFR[tS])}%、EFFR ${f2(EFFR[tE])}%、IORB ${f2(IORB[tS])}%、ON RRP ${f2(RRPR[lastOn(RRPR, LD)])}%、常備附買回操作（SRP）利率 ${f2(SRFR[lastOn(SRFR, LD)])}%。SOFR 減 IORB 為 ${sbp(sp)} bp，近 20 個交易日平均 ${sbp(a20)} bp${a20 > 2 ? '，附買回市場資金偏緊' : a20 < -2 ? '，附買回市場資金寬鬆' : '，資金大致充足但已不寬鬆'}。SRP ${SRF[tF] >= 0.05 ? `${fmtDate(DY[tF])} 使用 ${y(SRF[tF])}` : `${fmtDate(DY[tF])} 未被使用`}。</p>` + ample();
 })();
 
@@ -98,7 +115,7 @@ function ample() {
 
 /* ---------- overview tables ---------- */
 (function tables() {
-  const wrows = [['Total assets', '總資產', WALCL], ['Treasury securities', '公債', UST], ['of which Treasury bills', '國庫券（RMP）', BILLS], ['Mortgage-backed securities', 'MBS', MBS],
+  const wrows = [['Total assets', '總資產', WALCL], ['Treasury securities', '公債', UST], ['of which Treasury bills', '國庫券', BILLS], ['Mortgage-backed securities', 'MBS', MBS],
     ['Reserve balances', '銀行準備金', RES], ['Treasury General Account (TGA)', '財政部存款', TGAW], ['ON RRP (ex foreign official)', '隔夜逆回購', ONRRPW],
     ['Foreign official reverse repo', '外國官方逆回購', FRRP], ['Net liquidity (assets − TGA − ON RRP)', '淨流動性', NETL],
     ['Primary credit (discount window)', '貼現窗口', PCR], ['Repurchase agreements (SRP, FIMA)', '附買回', REPO]];

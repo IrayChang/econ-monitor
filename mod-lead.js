@@ -99,7 +99,7 @@
   if (DK === 'ppi') {
     const pg = yoy(m.PPI_G, 12), ip = m.ISM_P, il = lastI(ip), gl = lastI(pg);
     section('Leading indicators',
-      'ISM 製造業物價分項是採購經理回覆「付出的價格上升」的比例，2018 年以來大約領先 PPI 最終需求商品年增 6–7 個月（相關係數約 0.87），圖中虛線往後移 6 個月畫。進口物價反映海外供給與美元，跟 PPI 商品大致同步。',
+      'ISM 製造業物價分項是採購經理回覆「付出的價格上升」的比例，2018 年以來大約領先 PPI 最終需求商品年增 6–7 個月（相關係數約 0.87），圖中虛線往後移 6 個月畫。進口物價反映海外出口商的定價與美元，跟 PPI 商品大致同步；BLS 的進口物價不含關稅，所以關稅期間若進口物價持平、PPI 商品上漲，代表關稅成本由國內買方吸收並往下游轉嫁。',
       ['ld1', 'ld2'], `ISM 物價分項 ${mzh(LM[il])}為 <b>${f1(ip[il])}</b>，對應 6 個月後；PPI 最終需求商品 ${mzh(LM[gl])}年增 ${f1(pg[gl])}%。`);
     chart({ id: 'ld1', axis: LM, k: 6, from: '2018-07', title: 'ISM Prices Paid Leads PPI Goods', sub: 'ISM index (L); PPI % change, year over year (R)', src: 'ISM; BLS',
       series: [{ name: 'ISM manufacturing prices, 6M later', v: later(ip, 6), c: '--c2', dash: 1 }, { name: 'PPI: Final demand goods', v: pg, c: '--c1', axis: 'R' }] });
@@ -132,6 +132,14 @@
       ['ld1'], `${mzh(LM[L_])}總週薪資年增 <b>${f1(aw[L_])}%</b>，名目 PCE 年增 ${f1(pc[lastI(pc)])}%。`);
     chart({ id: 'ld1', axis: LM, from: MF, title: 'Payroll Income vs. Consumer Spending', sub: '% change, year over year', src: 'BLS (CES); BEA',
       series: [{ name: 'Aggregate weekly payrolls, private', v: aw, c: '--c2' }, { name: 'Nominal PCE', v: pc, c: '--c1' }] });
+    if (m.RS_CTRL_REAL) {
+      const cn = yoy(m.RS_CTRL, 12), cr = yoy(m.RS_CTRL_REAL, 12), cl = lastI(cr);
+      section('Nominal vs. real',
+        '控制組的名目年增減去實質年增，大致就是這些商品的漲價幅度。兩條線差距拉大，代表銷售成長有越來越多來自價格而不是數量。實質值由本站以 CPI 對應項目平減估算。',
+        ['ld2'], `${mzh(LM[cl])}控制組名目年增 <b>${f1(cn[cl])}%</b>，實質 <b>${f1(cr[cl])}%</b>，價格約貢獻 ${f1(cn[cl] - cr[cl])} 個百分點。`);
+      chart({ id: 'ld2', axis: LM, from: MF, title: 'Retail Control Group: Nominal vs. Real', sub: '% change, year over year', src: 'Census Bureau; BLS (CPI); deflated by ECAN', ref: 0,
+        series: [{ name: 'Control group, nominal', v: cn, c: '--c1' }, { name: 'Control group, real (CPI-deflated)', v: cr, c: '--c2' }] });
+    }
   }
   if (DK === 'gdp') {
     const co = ma(yoy(m.CAPEX, 12), 3), cs = ma(yoy(m.CAPSHIP, 12), 3), cl = lastI(co), pl = lastI(m.PERMIT);
