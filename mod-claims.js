@@ -70,7 +70,7 @@ seriesChart('cch4', wopt({ title: 'Initial Claims, 4-Week Moving Average', sub: 
 const LM = Math.max(...MON_ITEMS.map(it => lastIdx(get(it.k, 'm'))));
 const MCAT = MON_ITEMS.map(it => ({ k: it.k, n: it.k === 'ADP' ? 'ADP Private Employment, Monthly Change' : it.n, v: (it.k === 'ADP' ? dif(get(it.k, 'm')) : get(it.k, 'm')).slice(0, LM + 1), grp: { cps: 'Unemployed by reason (CPS), thous.', adp: 'ADP', pay: 'ADP Pay Insights, % Y/Y' }[it.grp] || it.grp }));
 const MR = { '1Y': 12, '2Y': 24, '5Y': 60, Max: 0 };
-const mopt = def => ({ months: MM_.slice(0, LM + 1), cat: MCAT, ranges: MR, fmt: v => Math.abs(v) >= 100 ? fk(v) : v.toFixed(1), src: 'BLS; ADP Research', W: 460, H: 330, def });
+const mopt = def => ({ months: MM_.slice(0, LM + 1), cat: MCAT, ranges: MR, fmt: v => Math.abs(v) >= 100 ? fk(v) : v.toFixed(2), src: 'BLS; ADP Research', W: 460, H: 330, def });
 seriesChart('cch5', mopt({ title: 'Unemployed: Job Losers vs. Job Leavers', sub: 'Thous., SA', r: '5Y', ids: [{ k: 'LNS13023621' }, { k: 'LNS13023705', ax: 'R' }] }));
 seriesChart('cch6', mopt({ title: 'ADP Pay Growth: Job-Stayers vs. Job-Changers', sub: 'Median Annual Pay Change, %', r: '5Y', ids: [{ k: 'PAY:Job-stayers:base' }, { k: 'PAY:Job-changers:base' }] }));
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { for (const k in SC) SC[k].draw(); });

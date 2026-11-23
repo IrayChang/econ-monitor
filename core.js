@@ -5,8 +5,8 @@ const NAV = [['', [['overview', 'Overview']]], ['Inflation', [['cpi', 'CPI'], ['
 const DK = ROUTES[location.hash.slice(1)] ? location.hash.slice(1) : 'overview', MOD = ROUTES[DK];
 addEventListener('hashchange', () => location.reload());
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-const f1 = v => v == null || !isFinite(v) ? 'n.a.' : (Math.abs(v) < 0.05 ? 0 : v).toFixed(1);
-const sg = v => v == null ? 'n.a.' : (v > 0 ? '+' : '') + v.toFixed(1);
+const f1 = v => v == null || !isFinite(v) ? 'n.a.' : (Math.abs(v) < 0.005 ? 0 : v).toFixed(2);
+const sg = v => v == null ? 'n.a.' : (v > 0 ? '+' : '') + v.toFixed(2);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const mlab = m => MON[+m.slice(5) - 1];
@@ -160,8 +160,8 @@ function hv(el, o) {
     const i = Math.max(s, Math.min(e, Math.floor(s + (sx - x0) / xw)));
     xl.setAttribute('x1', X(i)); xl.setAttribute('x2', X(i)); xl.setAttribute('visibility', 'visible');
     tip.innerHTML = `<b>${plab(MO[i])}</b><br>` + o.series.map(q =>
-      `<span style="color:${css(q.c)}">■</span> ${esc(q.name)}: ${q.v[i] == null ? 'n.a.' : o.fmt ? o.fmt(q.v[i]) : (o.unit ? f1(q.v[i]) + o.unit : q.v[i].toFixed(1))}`).join('<br>') +
-      (hlOn && o.hl[i] ? `<br><i>${esc(o.hl[i])}</i>` : '') + (o.bands || []).filter(b => b.lo[i] != null && b.hi[i] != null).map(b => `<br>${esc(b.name)}: ${o.fmt ? o.fmt(b.lo[i]) : b.lo[i].toFixed(1)} to ${o.fmt ? o.fmt(b.hi[i]) : b.hi[i].toFixed(1)}`).join('');
+      `<span style="color:${css(q.c)}">■</span> ${esc(q.name)}: ${q.v[i] == null ? 'n.a.' : o.fmt ? o.fmt(q.v[i]) : (o.unit ? f1(q.v[i]) + o.unit : q.v[i].toFixed(2))}`).join('<br>') +
+      (hlOn && o.hl[i] ? `<br><i>${esc(o.hl[i])}</i>` : '') + (o.bands || []).filter(b => b.lo[i] != null && b.hi[i] != null).map(b => `<br>${esc(b.name)}: ${o.fmt ? o.fmt(b.lo[i]) : b.lo[i].toFixed(2)} to ${o.fmt ? o.fmt(b.hi[i]) : b.hi[i].toFixed(2)}`).join('');
     tip.style.display = 'block';
     const px = X(i) / W * r.width, tw = tip.offsetWidth;
     tip.style.left = (px + 14 + tw > r.width ? px - tw - 4 : px + 14) + 'px';

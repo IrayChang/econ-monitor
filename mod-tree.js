@@ -106,7 +106,7 @@ function subFor(m, u) {
   return (MEAS[m] || PCT[m]).sub;
 }
 function fmtFor(m, u) {
-  if (m === 'lvl') return v => v.toLocaleString('en-US', { maximumFractionDigits: u === 'k' || u === '$' ? 0 : 2 });
+  if (m === 'lvl') return v => v.toLocaleString('en-US', { minimumFractionDigits: u === 'k' || u === '$' ? 0 : 2, maximumFractionDigits: u === 'k' || u === '$' ? 0 : 2 });
   if (u === '%') return v => (v > 0 ? '+' : '') + v.toFixed(2) + ' pp';
   if (MEAS[m] && MEAS[m].add && u === 'k') return v => (v > 0 ? '+' : '') + Math.round(v).toLocaleString('en-US') + 'k';
   return v => f1(v) + '%';
@@ -208,7 +208,7 @@ function chart(id, def) {
     q = q.trim().toLowerCase();
     let html = '';
     hits = [];
-    const row = (i, pad) => { hits.push(i); return `<li data-i="${i}" style="padding-left:${10 + pad * 12}px">${esc(IT[i].n)}${IT[i].w != null ? `<span class="w">${IT[i].w.toFixed(1)}</span>` : ''}</li>`; };
+    const row = (i, pad) => { hits.push(i); return `<li data-i="${i}" style="padding-left:${10 + pad * 12}px">${esc(IT[i].n)}${IT[i].w != null ? `<span class="w">${IT[i].w.toFixed(2)}</span>` : ''}</li>`; };
     if (!q) {
       if (IT.some(it => it.a && !it.x)) html += '<li class="h">Special aggregates</li>';
       IT.forEach((it, i) => { if (it.a && !it.x) html += row(i, 0); });
@@ -285,7 +285,7 @@ if (KIND !== 'nfp') (function drawOverview() {
     const i = IDX[n], yy = val(i, 'yoy').v, a3 = ann(i, 3), d = a3 != null && yy[L] != null ? a3 - yy[L] : null;
     const mo = momTag(d, MOM_T), mm = val(i, 'mom').v, sM = heatStat(mm, M, L), sY = heatStat(yy, M, L);
     const hz = (v, st, cls, b) => heatTd(b ? `<b>${f1(v)}</b>` : f1(v), heatZ(v, st), HTONE, cls);
-    h += `<tr data-i="${i}"><td style="padding-left:${9 + pad * 14}px"><button type="button" class="nm" data-ov="${i}">${esc(nm(i))}</button></td><td>${IT[i].w != null ? IT[i].w.toFixed(1) : ''}</td>` +
+    h += `<tr data-i="${i}"><td style="padding-left:${9 + pad * 14}px"><button type="button" class="nm" data-ov="${i}">${esc(nm(i))}</button></td><td>${IT[i].w != null ? IT[i].w.toFixed(2) : ''}</td>` +
       hz(mm[L], sM, 'vl', 1) + hz(mm[L - 1], sM) + hz(mm[L - 2], sM) + hz(a3, heatStat(val(i, 'ann3').v, M, L), 'vl') + hz(ann(i, 6), heatStat(val(i, 'ann6').v, M, L)) +
       hz(yy[L], sY, 'vl', 1) + hz(yy[L - 1], sY) + hz(yy[L - 12], sY) + `<td class="vl" style="text-align:left">${mo}</td><td class="vl" style="padding:2px 9px">${spark(yy)}</td></tr>`;
   }
@@ -301,7 +301,7 @@ const yGap = yA == null ? `（${mzh(M[L - 12])}無官方指數）` : '';
 if (KIND === 'price') document.getElementById('p1').innerHTML = `
 <p>美國 ${mzh(lm)}${K.zh}季調後${chg(mA)}，前月為 ${f1(MM(A)[L - 1])}%，再前月為 ${f1(MM(A)[L - 2])}%。${yA == null ? `年增率無法計算${yGap}，前月為 ${f1(Y(A)[L - 1])}%` : `年增率由 ${f1(Y(A)[L - 1])}% ${yA > Y(A)[L - 1] ? '升至' : yA < Y(A)[L - 1] ? '降至' : '持平於'} ${f1(yA)}%`}${K.ref ? '，聯準會目標為 2%' : ''}。${K.coreZh}${chg(mC)}，${yz(yC)}；核心 3 個月年化 ${f1(ann(IDX[C], 3))}%、6 個月年化 ${f1(ann(IDX[C], 6))}%（前月 6 個月年化 ${f1(val(IDX[C], 'ann6').v[L - 1])}%）${yC == null ? '。' : `，${ann(IDX[C], 6) > yC + 0.2 ? '近半年的速度快於過去一年，通膨有再升溫跡象' : ann(IDX[C], 6) < yC - 0.2 ? '近半年的速度慢於過去一年，通膨持續降溫' : '近半年的速度與過去一年相近'}`}${trendY(yC, Y(C)[L - 12]) ? `；核心年增率在過去一年大致${trendY(yC, Y(C)[L - 12])}` : ''}${yA == null || yC == null ? '' : DK === 'ppi' ? `，總體${yC < yA ? '高於' : '低於'}核心，差距來自能源（${yz(Y(E)[L])}）、食品（${yz(Y(F)[L])}）與貿易服務（${yz(Y(SH)[L])}）。` : yC < yA ? '，總體高於核心，差距主要來自能源與食品。' : '，總體低於核心，能源與食品壓低了總體。'}</p>
 <p>能源價格${chg(MM(E)[L])}，${yz(Y(E)[L])}。食品價格${chg(MM(F)[L])}，${yz(Y(F)[L])}。</p>`;
-const pm = v => v == null ? 'n.a.' : Math.abs(v) < 0.05 ? '0.0%' : (v > 0 ? '+' : '−') + Math.abs(v).toFixed(1) + '%';
+const pm = v => v == null ? 'n.a.' : Math.abs(v) < 0.005 ? '0.00%' : (v > 0 ? '+' : '−') + Math.abs(v).toFixed(2) + '%';
 if (DK === 'ppi') document.getElementById('p2').innerHTML = `
 <p>進入核心 PCE 的分項（BEA 計算 PCE 時這幾項用 PPI，不用 CPI），月增率（括號內為前月）：${PCE_IN.map(([n, z]) => `${z}${val(IDX[n], 'mom').nsa ? '（未季調）' : ''} ${pm(MM(n)[L])}（${pm(MM(n)[L - 1])}）`).join('、')}。${PCE_IN.some(([n]) => n === 'Portfolio management') ? '資產管理費隨股價變動，不代表一般物價，估算核心 PCE 時通常另外看待。' : ''}</p>
 <p>商品（排除食品與能源）月增 ${pm(MM(GD)[L])}，${yz(Y(GD)[L])}，是關稅與原物料成本最先反映的地方；服務（排除貿易、運輸與倉儲）月增 ${pm(MM(PPI_SVC)[L])}，${yz(Y(PPI_SVC)[L])}。${K.exZh}${chg(MM(SH)[L])}，這項是批發與零售的毛利，每月波動大、常在下個月反轉，單月不宜解讀。</p>`;
@@ -326,12 +326,12 @@ if (KIND === 'retail') {
   // ---------- what to watch: noise, revisions, prices, the GDP quarter ----------
   (function watch() {
     const AX = 'Total ex motor vehicles and parts', AG = 'Total ex autos and gasoline', FS = 'Food services and drinking places', GS = 'Gasoline stations', MV = 'Motor vehicle and parts dealers';
-    const se = D.se || {}, pv = D.prev, rl = D.real, lv = n => D.sa[IDX[n]], pp = v => v == null ? 'n.a.' : Math.abs(v) < 0.05 ? '0.0%' : (v > 0 ? '+' : '−') + Math.abs(v).toFixed(1) + '%';
+    const se = D.se || {}, pv = D.prev, rl = D.real, lv = n => D.sa[IDX[n]], pp = v => v == null ? 'n.a.' : Math.abs(v) < 0.005 ? '0.00%' : (v > 0 ? '+' : '−') + Math.abs(v).toFixed(2) + '%';
     const pct = (a, b) => a == null || b == null || !b ? null : (a / b - 1) * 100;
     const rows = [];
     // 1. statistical noise: Census's own 90% confidence interval for the month-to-month change
     const sig = n => { const s = (se[n] || {})[lm], c = MM(n)[L]; if (s == null || c == null) return `${pp(c)}（Census 未提供標準誤）`;
-      const h = 1.645 * s; return `${pp(c)}，90% 信賴區間 ±${h.toFixed(1)}%：${Math.abs(c) > h ? '<b>統計上顯著</b>' : '<b>不顯著</b>（無法排除實際為零）'}`; };
+      const h = 1.645 * s; return `${pp(c)}，90% 信賴區間 ±${h.toFixed(2)}%：${Math.abs(c) > h ? '<b>統計上顯著</b>' : '<b>不顯著</b>（無法排除實際為零）'}`; };
     rows.push(['單月變動是否顯著', `總額 ${sig(A)}<br>扣除汽車 ${sig(AX)}<br>扣除汽車與汽油 ${sig(AG)}`,
       '初值（advance）只用部分樣本。Census 公布每月變動的標準誤，變動小於信賴區間時，單月漲跌可能只是抽樣誤差，要看 3 個月趨勢。']);
     // 2. revisions to the earlier months (the previous vintage is kept by the refresh)
@@ -339,7 +339,7 @@ if (KIND === 'retail') {
       const ms = Object.keys(pv.v[A]).sort(), t = L - 1;
       const rv = n => { const o = pv.v[n] || {}, cur = lv(n);
         return { old: pct(o[ms[1]], o[ms[0]]), now: MM(n)[t], lvl: pct(cur[t], o[ms[1]]), eff: pct(cur[L], o[ms[1]]) }; };
-      const line = (n, lab) => { const r = rv(n); return `${lab}：${mzh(ms[1])}月增由 ${pp(r.old)} 修正為 ${pp(r.now)}，水準${r.lvl >= 0 ? '上修' : '下修'} ${Math.abs(r.lvl).toFixed(1)}%；本月水準相對前次公布的 ${+ms[1].slice(5)} 月 ${pp(r.eff)}`; };
+      const line = (n, lab) => { const r = rv(n); return `${lab}：${mzh(ms[1])}月增由 ${pp(r.old)} 修正為 ${pp(r.now)}，水準${r.lvl >= 0 ? '上修' : '下修'} ${Math.abs(r.lvl).toFixed(2)}%；本月水準相對前次公布的 ${+ms[1].slice(5)} 月 ${pp(r.eff)}`; };
       rows.push(['前月修正', `${line(A, '總額')}<br>${line(C, '控制組')}`,
         '市場常只看本月月增，但前月上修或下修會改變水準。「相對前次公布」把本月與修正合在一起，才是這份報告實際帶來的新資訊。']);
     } else rows.push(['前月修正', '前一版數據未保留，下次公布時起才能比較。', '初值在下個月會用完整樣本修正。']);
@@ -373,14 +373,14 @@ if (KIND === 'nfp') {
   const lv = n => D.sa[IDX[n]], U = 'Unemployment rate', AH = 'Average hourly earnings, all employees';
   const sect = IT.map((it, i) => i).filter(i => !IT[i].x && (IT[i].d === 3 || IT[i].n === 'Government'));
   const mv = movers(sect, 'dk');
-  HD.textContent = `美國 ${+lm.slice(5)} 月非農就業${dk(IDX[A])[L] >= 0 ? '增加' : '減少'} ${fk(Math.abs(dk(IDX[A])[L]))}k，失業率 ${lv(U)[L].toFixed(1)}%`;
+  HD.textContent = `美國 ${+lm.slice(5)} 月非農就業${dk(IDX[A])[L] >= 0 ? '增加' : '減少'} ${fk(Math.abs(dk(IDX[A])[L]))}k，失業率 ${lv(U)[L].toFixed(2)}%`;
   document.getElementById('p1').innerHTML = `<p>美國 ${mzh(lm)}非農就業${dk(IDX[A])[L] >= 0 ? '增加' : '減少'} ${fk(Math.abs(dk(IDX[A])[L]))} 千人，前月 ${sgk(dk(IDX[A])[L - 1])}，3 個月平均 ${sgk(dk3(IDX[A])[L])}，過去 12 個月平均 ${sgk(a12(IDX[A]))}${D.prelim ? `（${D.prelim.map(mzh).join('、')}為初值）` : ''}。民間部門 ${sgk(dk(IDX[C])[L])}，政府 ${sgk(dk(IDX['Government'])[L])}。</p>
 <p>產業別中增加最多的是${mv.up.map(([i, v]) => `${zhn(i)}（${sgk(v)}）`).join('、')}${mv.dn.length ? `；減少最多的是${mv.dn.map(([i, v]) => `${zhn(i)}（${sgk(v)}）`).join('、')}` : ''}。</p>`;
-  document.getElementById('p2').innerHTML = `<p>家計調查方面，失業率 ${lv(U)[L].toFixed(1)}%（前月 ${lv(U)[L - 1].toFixed(1)}%，${lv(U)[L - 12] != null ? `一年前 ${lv(U)[L - 12].toFixed(1)}%` : '一年前無資料'}），25–54 歲就業人口比 ${lv('Employment-population ratio, 25-54 yrs')[L].toFixed(1)}%，勞參率 ${lv('Labor force participation rate')[L].toFixed(1)}%。平均時薪年增 ${f1(Y(AH)[L])}%，月增 ${f1(MM(AH)[L])}%。</p>`;
+  document.getElementById('p2').innerHTML = `<p>家計調查方面，失業率 ${lv(U)[L].toFixed(2)}%（前月 ${lv(U)[L - 1].toFixed(2)}%，${lv(U)[L - 12] != null ? `一年前 ${lv(U)[L - 12].toFixed(2)}%` : '一年前無資料'}），25–54 歲就業人口比 ${lv('Employment-population ratio, 25-54 yrs')[L].toFixed(2)}%，勞參率 ${lv('Labor force participation rate')[L].toFixed(2)}%。平均時薪年增 ${f1(Y(AH)[L])}%，月增 ${f1(MM(AH)[L])}%。</p>`;
   document.getElementById('ovHow').textContent = `動能＝近 3 個月平均新增就業相對 12 個月平均：高出四分之一以上為加速（綠），低四分之一以上為放緩（紅）。點列可在 Components 拆開該產業。`;
   k3([[nm(IDX[A]), 'M/M change, thous.', dk(IDX[A]), sgk, `3M 平均 ${sgk(dk3(IDX[A])[L])}　12M 平均 ${sgk(a12(IDX[A]))}`],
     [nm(IDX[C]), 'M/M change, thous.', dk(IDX[C]), sgk, `3M 平均 ${sgk(dk3(IDX[C])[L])}`],
-    [nm(IDX[U]), 'Level, %', lv(U), v => v == null ? 'n.a.' : v.toFixed(1), lv(U)[L - 12] != null ? `一年前 ${lv(U)[L - 12].toFixed(1)}%` : '']]);
+    [nm(IDX[U]), 'Level, %', lv(U), v => v == null ? 'n.a.' : v.toFixed(2), lv(U)[L - 12] != null ? `一年前 ${lv(U)[L - 12].toFixed(2)}%` : '']]);
   const OVN = [[A, 0], [C, 1], ['Goods-producing', 2], ['Construction', 3], ['Manufacturing', 3], ['Private service-providing', 2], ['Health care and social assistance', 3], ['Leisure and hospitality', 3], ['Professional and business services', 3], ['Government', 1]].filter(r => IDX[r[0]] != null);
   const lb = `${mlab(M[L])} '${M[L].slice(2, 4)}`;
   let h = `<thead><tr class="grp"><th>Nonfarm Payrolls (thous.)</th><th></th><th class="vl" colspan="3">Change</th><th class="vl" colspan="3">Avg. monthly change</th><th class="vl">Y/Y</th><th class="vl">Momentum</th><th class="vl">3M avg. chg, 24 mo.</th></tr>
@@ -403,7 +403,7 @@ if (KIND === 'nfp') {
     const v = val(IDX[n], m).v, dd = v[L] != null && v[L - 12] != null ? v[L] - v[L - 12] : null, unit = m === 'yoy' ? '% Y/Y' : IT[IDX[n]].u === '%' ? '%' : '';
     // unemployment up is bad; wage growth reads like a price; participation, employment and hours up are good
     const tn = /^Unemployment|U-6/.test(n) ? 'bad' : n.startsWith('Average hourly') ? 'price' : 'good', st = heatStat(v, M, L), hz = (x, cls, b) => heatTd(b ? `<b>${f1(x)}</b>` : f1(x), heatZ(x, st), tn, cls);
-    h2 += `<tr><td><button type="button" class="nm" data-hh="${IDX[n]}">${esc(nm(IDX[n]))}</button> <span class="note">${unit}</span></td>${hz(v[L], 'vl', 1)}${hz(v[L - 1])}${hz(v[L - 3], 'vl')}${hz(v[L - 12])}<td class="vl">${dd == null ? '' : (dd > 0 ? '+' : '') + dd.toFixed(1)}</td><td class="vl" style="padding:2px 9px">${spark(v)}</td></tr>`;
+    h2 += `<tr><td><button type="button" class="nm" data-hh="${IDX[n]}">${esc(nm(IDX[n]))}</button> <span class="note">${unit}</span></td>${hz(v[L], 'vl', 1)}${hz(v[L - 1])}${hz(v[L - 3], 'vl')}${hz(v[L - 12])}<td class="vl">${dd == null ? '' : (dd > 0 ? '+' : '') + dd.toFixed(2)}</td><td class="vl" style="padding:2px 9px">${spark(v)}</td></tr>`;
   }
   const w2 = document.getElementById('ovt2w'); w2.hidden = false;
   const el2 = document.getElementById('ovt2'); el2.innerHTML = h2 + '</tbody>';
@@ -459,7 +459,7 @@ function rowHtml(i, depth) {
   if (fixed) open.add(i);
   const cr = fixed ? '<span class="sp"></span>' : kids.length ?`<button type="button" class="cr" data-t="${i}" aria-expanded="${open.has(i)}" aria-label="${open.has(i) ? 'Collapse' : 'Expand'} ${esc(IT[i].n)}">${open.has(i) ? '▾' : '▸'}</button>` : '<span class="sp"></span>';
   let h = `<tr data-i="${i}" class="${selI === i ? 'sel' : ''}${IT[i].p ? ' prod' : ''}"><td style="padding-left:${6 + depth * 14}px">${cr}<button type="button" class="nm" data-p="${i}">${esc(nm(i) === IT[i].n ? IT[i].n : nm(i))}</button>${mm.nsa ? ' <span class="note">NSA</span>' : ''}</td>` +
-    `<td>${IT[i].w != null ? IT[i].w.toFixed(1) : ''}</td>` +
+    `<td>${IT[i].w != null ? IT[i].w.toFixed(2) : ''}</td>` +
     TC.map(g => heatCells(i, g)).join('') + '</tr>';
   if (open.has(i)) for (const k of kids) h += rowHtml(k, depth + 1);
   return h;
@@ -628,12 +628,12 @@ if (D.disp) (function breadth() {
   const BL = BM.length - 1, last = P.comps.length, thr = P.thr;
   const y12 = P.y12[BL], a6 = P.a6[BL];
   const vsPrev = (v, p) => { if (p == null) return ''; const d = Math.round(v) - Math.round(p);
-    return `（${mzh(BM[BL - 1])}為 ${p.toFixed(0)}%，${d === 0 ? '持平' : (d > 0 ? '增加 ' : '減少 ') + Math.abs(d) + ' 個百分點'}）`; };
+    return `（${mzh(BM[BL - 1])}為 ${p.toFixed(2)}%，${d === 0 ? '持平' : (d > 0 ? '增加 ' : '減少 ') + Math.abs(d) + ' 個百分點'}）`; };
   const peakA6 = Math.max(...P.a6), peakA6m = BM[P.a6.indexOf(peakA6)];
   const cmp = (v, pre) => v > pre + 3 ? '仍明顯高於' : v < pre - 3 ? '已低於' : '接近';
   document.getElementById('brdTxt').innerHTML =
-    `過去 12 個月，PCE 籃子 <b>${last}</b> 個細項中有 <b>${y12.toFixed(0)}%</b> 漲幅超過 ${thr}%${vsPrev(y12, P.y12[BL - 1])}，低於疫後高點 ${P.peak.v.toFixed(0)}%（${mzh(P.peak.m)}），但${cmp(y12, P.pre_y12)}疫情前二十年（1995–2019）的平均 ${P.pre_y12.toFixed(0)}%。` +
-    `只看過去 6 個月（年化），比例為 <b>${a6.toFixed(0)}%</b>${vsPrev(a6, P.a6[BL - 1])}，疫後高點 ${peakA6.toFixed(0)}%（${mzh(peakA6m)}），疫前平均 ${P.pre_a6.toFixed(0)}%，結論${Math.sign(y12 - P.pre_y12) === Math.sign(a6 - P.pre_a6) ? '相同' : '不同'}。資料至 ${mzh(BM[BL])}。`;
+    `過去 12 個月，PCE 籃子 <b>${last}</b> 個細項中有 <b>${y12.toFixed(2)}%</b> 漲幅超過 ${thr}%${vsPrev(y12, P.y12[BL - 1])}，低於疫後高點 ${P.peak.v.toFixed(2)}%（${mzh(P.peak.m)}），但${cmp(y12, P.pre_y12)}疫情前二十年（1995–2019）的平均 ${P.pre_y12.toFixed(0)}%。` +
+    `只看過去 6 個月（年化），比例為 <b>${a6.toFixed(2)}%</b>${vsPrev(a6, P.a6[BL - 1])}，疫後高點 ${peakA6.toFixed(2)}%（${mzh(peakA6m)}），疫前平均 ${P.pre_a6.toFixed(2)}%，結論${Math.sign(y12 - P.pre_y12) === Math.sign(a6 - P.pre_a6) ? '相同' : '不同'}。資料至 ${mzh(BM[BL])}。`;
   // trend chart
   let br = store.get('brdR') || 'Max';
   const RK = ['5Y', '10Y', '20Y', 'Max'], RB = { '5Y': 60, '10Y': 120, '20Y': 240 };
@@ -643,7 +643,7 @@ if (D.disp) (function breadth() {
     const s = RB[br] ? Math.max(0, BM.length - RB[br]) : 0;
     hv(tsEl.querySelector('.plot'), { months: BM, start: s, title: `Share of PCE Components Rising Faster than ${thr}%`, sub: '% of Components', unit: '%', src: 'Bureau of Economic Analysis',
       series: [{ name: '12-Mo. % Change', v: P.y12, c: '--c1', axis: 'L' }, { name: '6-Mo. Annualized', v: P.a6, c: '--c2', axis: 'L' },
-        { name: `1995–2019 avg., 12-Mo. (${P.pre_y12.toFixed(0)}%)`, v: P.y12.map(() => P.pre_y12), c: '--frame', axis: 'L', dash: 1 }] });
+        { name: `1995–2019 avg., 12-Mo. (${P.pre_y12.toFixed(2)}%)`, v: P.y12.map(() => P.pre_y12), c: '--frame', axis: 'L', dash: 1 }] });
     tsEl.querySelector('.tb').innerHTML = `<span class="seg" role="group" aria-label="Range">${RK.map(k => `<button type="button" data-r="${k}" aria-pressed="${k === br}">${k}</button>`).join('')}</span>`;
   };
   tsEl.querySelector('.tb').addEventListener('click', ev => { const b = ev.target.closest('button[data-r]'); if (b) { br = b.dataset.r; store.set('brdR', br); drawTs(); } });
@@ -683,7 +683,7 @@ if (D.disp) (function breadth() {
     svg.querySelectorAll('rect.bin').forEach(r => {
       r.addEventListener('mousemove', ev => {
         const k = +r.dataset.k, b = bins[k].slice().sort((p, q) => q[col] - p[col]), rc = svg.getBoundingClientRect();
-        tip.innerHTML = `<b>${LBL[k]}%: ${b.length} 項</b><br>` + b.slice(0, 6).map(c => `${esc(c[0])} ${c[col].toFixed(1)}`).join('<br>') + (b.length > 6 ? `<br>… +${b.length - 6}` : '');
+        tip.innerHTML = `<b>${LBL[k]}%: ${b.length} 項</b><br>` + b.slice(0, 6).map(c => `${esc(c[0])} ${c[col].toFixed(2)}`).join('<br>') + (b.length > 6 ? `<br>… +${b.length - 6}` : '');
         tip.style.display = 'block';
         const px = ev.clientX - rc.left, tw = tip.offsetWidth;
         tip.style.left = (px + 14 + tw > rc.width ? px - tw - 8 : px + 14) + 'px'; tip.style.top = '40px';
@@ -693,7 +693,7 @@ if (D.disp) (function breadth() {
     if (sel == null) { list.hidden = true; return; }
     const b = bins[sel].slice().sort((p, q) => q[col] - p[col]);
     list.hidden = false;
-    list.innerHTML = `<h3>${LBL[sel]}%（${hm === 'y12' ? '12 個月' : '6 個月年化'}）：${b.length} 項 · 點名稱在 Components 拆開</h3><ol>${b.map(c => `<li><button type="button" class="nm" data-n="${esc(c[0])}">${esc(c[0])}</button><span>${c[col].toFixed(1)}</span></li>`).join('')}</ol>`;
+    list.innerHTML = `<h3>${LBL[sel]}%（${hm === 'y12' ? '12 個月' : '6 個月年化'}）：${b.length} 項 · 點名稱在 Components 拆開</h3><ol>${b.map(c => `<li><button type="button" class="nm" data-n="${esc(c[0])}">${esc(c[0])}</button><span>${c[col].toFixed(2)}</span></li>`).join('')}</ol>`;
   };
   hEl.addEventListener('click', ev => {
     const b = ev.target.closest('button[data-h]'); if (b) { hm = b.dataset.h; store.set('brdM', hm); drawHist(); return; }

@@ -15,6 +15,8 @@ const CURR = w('CURR'), BILLS = w('BILLS'), BTA = w('BTA'), RESR = RES.map((v, t
 const SOFR = d('SOFR'), EFFR = d('EFFR'), IORB = d('IORB'), RRPR = d('RRPR'), SRFR = d('SRFR'), SOFR99 = d('SOFR99'), SOFRV = d('SOFRV');
 const SOFR25 = d('SOFR25'), SOFR75 = d('SOFR75'), SOFR1 = d('SOFR1'), TGCR = d('TGCR');
 const RRP = d('RRP'), SRF = d('SRF'), TGA = d('TGA'), FFTL = d('FFTL'), FFTU = d('FFTU');
+// debt limit (DTS Table III-C, $ bn): headroom = statutory limit − debt subject to limit; no limit value while it is suspended
+const DSL = d('DSL'), DLIM = d('DLIM'), HEAD = minus(DLIM, DSL);
 const S_IORB = bp(SOFR, IORB), E_IORB = bp(EFFR, IORB), S99_IORB = bp(SOFR99, IORB), T_IORB = bp(TGCR, IORB);
 // repo against the ceiling: SOFR percentiles less the SRP rate (Anderson et al. 2026, Figure 5c)
 const S25_SRP = bp(SOFR25, SRFR), S75_SRP = bp(SOFR75, SRFR), S99_SRP = bp(SOFR99, SRFR);
@@ -86,15 +88,25 @@ document.getElementById('hd').textContent = `銀行準備金 ${tn(RES[LW])} 兆�
   const bal = xb == null ? '' : b13 > 0 && Math.abs(xb) < 5 ? `國庫券增加大致等於 MBS 到期金額，屬於 MBS 到期資金轉投資國庫券，資產負債表規模大致持平；沒有額外的準備金管理購買（RMP）`
     : b13 > 0 && xb >= 5 ? `國庫券增加超過 MBS 到期金額，每月多出約 ${y(xb)}，即 MBS 再投資以外的購買（如準備金管理購買 RMP），資產負債表隨準備金需求擴張`
     : a13 < -5 ? '資產負債表仍在縮減' : '';
-  document.getElementById('lp1').innerHTML = `<p>截至 ${fmtDate(WK[LW])}，銀行準備金 ${tn(RES[LW])} 兆美元，較前週${ud(r1.dRes)} ${y(r1.dRes)}（${brk(r1)}）${why(r1)}。過去 4 週${ud(r4.dRes)} ${y(r4.dRes)}（${brk(r4)}）${why(r4)}。財政部 TGA 為 ${tn(TGAW[LW])} 兆；繳稅日與公債交割日 TGA 上升會把資金從銀行體系抽走，單週數百億美元的準備金波動多半由此而來。ON RRP（不含外國官方）只剩 ${y(RRP[tR])}（${fmtDate(DY[tR])}），先前的閒置資金緩衝已幾乎用完，TGA 的波動現在直接反映在準備金上。</p>
+  document.getElementById('lp1').innerHTML = `<p>截至 ${fmtDate(WK[LW])}，銀行準備金 ${tn(RES[LW])} 兆美元，較前週${ud(r1.dRes)} ${y(r1.dRes)}（${brk(r1)}）${why(r1)}。過去 4 週${ud(r4.dRes)} ${y(r4.dRes)}（${brk(r4)}）${why(r4)}。財政部 TGA 為 ${tn(TGAW[LW])} 兆；繳稅日與公債交割日 TGA 上升會把資金從銀行體系抽走，單週數百億美元的準備金波動多半由此而來。ON RRP（不含外國官方）只剩 ${y(RRP[tR])}（${fmtDate(DY[tR])}），先前的閒置資金緩衝已幾乎用完，TGA 的波動現在直接反映在準備金上。${debtLimit(y)}</p>
 <p>資產端：聯準會總資產 ${tn(WALCL[LW])} 兆美元，過去 13 週平均每月${ud(a13)} ${y(a13)}；公債 ${tn(UST[LW])} 兆（其中國庫券 ${fb(BILLS[LW] * 10)} 億美元，每月${ud(b13)} ${y(b13)}）、MBS ${tn(MBS[LW])} 兆（每月${ud(m13)} ${y(m13)}）。${bal}${bal ? '。' : ''}</p>
 <p>利率：${fmtDate(DY[tS])} SOFR ${f2(SOFR[tS])}%、EFFR ${f2(EFFR[tE])}%、IORB ${f2(IORB[tS])}%、ON RRP ${f2(RRPR[lastOn(RRPR, LD)])}%、常備附買回操作（SRP）利率 ${f2(SRFR[lastOn(SRFR, LD)])}%。SOFR 減 IORB 為 ${sbp(sp)} bp，近 20 個交易日平均 ${sbp(a20)} bp${a20 > 2 ? '，附買回市場資金偏緊' : a20 < -2 ? '，附買回市場資金寬鬆' : '，資金大致充足但已不寬鬆'}。SRP ${SRF[tF] >= 0.05 ? `${fmtDate(DY[tF])} 使用 ${y(SRF[tF])}` : `${fmtDate(DY[tF])} 未被使用`}。</p>` + ample();
 })();
 
+// debt limit: said only when it could drive the TGA within about six months at the past 3 months' pace of borrowing, or already binds
+function debtLimit(y) {
+  const t = lastOn(DSL, LD); if (t < 0 || DLIM[t] == null || HEAD[t] == null) return '';
+  const t3 = lastOn(DSL, t - 63), pace = t3 < 0 ? null : (DSL[t] - DSL[t3]) / 3, h = HEAD[t];
+  const fx = '觸及上限後財政部以非常措施支應並動用 TGA 存款，TGA 下降會使準備金增加；上限提高或暫停後，財政部大量發行國庫券重建 TGA，會再把準備金抽走';
+  if (h < 25) return `債務上限：${fmtDate(DY[t])} 受上限約束的債務已頂到法定上限 ${tn(DLIM[t])} 兆美元（剩餘 ${y(h)}）。${fx}。`;
+  if (pace == null || pace <= 0 || h / pace > 6) return '';
+  return `債務上限：${fmtDate(DY[t])} 受上限約束的債務 ${tn(DSL[t])} 兆美元，法定上限 ${tn(DLIM[t])} 兆，剩餘 ${y(h)}；過去 3 個月平均每月增加 ${y(pace)}，照此速度約 ${(h / pace).toFixed(1)} 個月觸及上限（每月借款量隨繳稅與支出時點波動，此為粗估）。${fx}。`;
+}
+
 // reserve ampleness: the reserve ratio, and the New York Fed's elasticity with its 95% band
 function ample() {
   const tA = lastI(RESR); if (tA < 0 && LR < 0) return '';
-  const yA = lastOn(RESR, tA - 52), pct = v => v == null ? 'n.a.' : v.toFixed(1) + '%', b2 = v => v == null ? 'n.a.' : v.toFixed(2);
+  const yA = lastOn(RESR, tA - 52), pct = v => v == null ? 'n.a.' : v.toFixed(2) + '%', b2 = v => v == null ? 'n.a.' : v.toFixed(2);
   let txt = tA < 0 ? '' : `準備金占商業銀行總資產 ${pct(RESR[tA])}（${fmtDate(WK[tA])}，H.8 比 H.4.1 晚一週），一年前 ${pct(at(RESR, yA))}。`;
   if (LR >= 0) {
     const m = RDE[LR], lo = RDE025[LR], hi = RDE975[LR];
@@ -128,7 +140,8 @@ function ample() {
     ['ON RRP offering rate', '隔夜逆回購利率（下限）', RRPR, '%'], ['Standing repo operations (SRP) rate', '常備附買回操作利率（上限）', SRFR, '%'],
     ['SOFR − IORB', 'bp', S_IORB, 'bp'], ['EFFR − IORB', 'bp', E_IORB, 'bp'], ['SOFR 99th percentile − IORB', 'bp', S99_IORB, 'bp'], ['TGCR − IORB', 'bp', T_IORB, 'bp'],
     ['SOFR 75th percentile − SRP rate', 'bp, 上限壓力', S75_SRP, 'bp'], ['EFFR − IORB, 15-day volatility', 'bp, 標準差', E_SD, 'bpf'],
-    ['SOFR volume', '$ bn', SOFRV, '$'], ['ON RRP take-up', '$ bn', RRP, '$'], ['Standing repo operations (SRP) take-up', '$ bn', SRF, '$'], ['TGA closing balance', '$ bn, Daily Treasury Statement', TGA, '$']];
+    ['SOFR volume', '$ bn', SOFRV, '$'], ['ON RRP take-up', '$ bn', RRP, '$'], ['Standing repo operations (SRP) take-up', '$ bn', SRF, '$'], ['TGA closing balance', '$ bn, Daily Treasury Statement', TGA, '$'],
+    ['Debt limit headroom', '$ bn, 法定上限 − 受上限約束的債務', HEAD, '$']];
   const back = { '1 wk': 5, '1 mo': 21, '1 yr': 252 };
   h = `<thead><tr class="grp"><th>Daily</th><th class="vl" colspan="2">Latest</th><th class="vl" colspan="3">Earlier</th><th class="vl">3 mo.</th></tr>
 <tr><th></th><th class="vl">Date</th><th>Value</th>${Object.keys(back).map((k, j) => `<th${j ? '' : ' class="vl"'}>${k} ago</th>`).join('')}<th class="vl"></th></tr></thead><tbody>`;
@@ -152,8 +165,8 @@ function ample() {
   // [indicator, note, latest, 1 yr ago, Q1 2019, format, +1 if a higher value means scarcer reserves, change treated as no change]
   const rows = [
     ['Reserve demand elasticity', 'NY Fed, bp per 1% of bank assets', RDE[LR], at(RDE, lastOn(RDE, RD.findIndex(d => d > `${+RD[LR].slice(0, 4) - 1}${RD[LR].slice(4)}`) - 1)), q19(RD, RDE), v => v.toFixed(2), -1, .05],
-    ['Reserves, % of bank assets', 'H.4.1 ÷ H.8', RESR[wR], at(RESR, wR - 52), q19(WK, RESR), v => v.toFixed(1) + '%', -1, .2],
-    ['Reserves, % of GDP', 'H.4.1 ÷ BEA', RESG[wG], at(RESG, wG - 52), q19(WK, RESG), v => v.toFixed(1) + '%', -1, .2],
+    ['Reserves, % of bank assets', 'H.4.1 ÷ H.8', RESR[wR], at(RESR, wR - 52), q19(WK, RESR), v => v.toFixed(2) + '%', -1, .2],
+    ['Reserves, % of GDP', 'H.4.1 ÷ BEA', RESG[wG], at(RESG, wG - 52), q19(WK, RESG), v => v.toFixed(2) + '%', -1, .2],
     ['EFFR − IORB', '20-day avg., bp', win(E_IORB, tD), win(E_IORB, tY), q19(DY, E_IORB), v => sbp(Math.round(v * 10) / 10), 1, .5],
     ['TGCR − IORB', '20-day avg., bp', win(T_IORB, tD), win(T_IORB, tY), q19(DY, T_IORB), v => sbp(Math.round(v * 10) / 10), 1, .5],
     ['SOFR volume at or above IORB', 'lower bound, 20-day avg.', SHL20[lastOn(SHL20, tD)], at(SHL20, lastOn(SHL20, tY)), q19(DY, SHL), v => Math.round(v) + '%', 1, 3],
@@ -198,7 +211,7 @@ const DCAT = [
   { k: 'esd', n: 'EFFR − IORB, 15-Day Std. Dev.', v: cd(E_SD), grp: 'Volatility, bp' }, { k: 'tsd', n: 'TGCR − IORB, 15-Day Std. Dev.', v: cd(T_SD), grp: 'Volatility, bp' },
   { k: 'shl', n: 'At Least (Lower Bound)', v: cd(SHL20), grp: 'SOFR volume at or above IORB, %' }, { k: 'shh', n: 'At Most (Upper Bound)', v: cd(SHH20), grp: 'SOFR volume at or above IORB, %', dash: 1 },
   { k: 'rrp', n: 'ON RRP Take-Up', v: cd(RRP), grp: 'Operations, $ bn' }, { k: 'srf', n: 'Standing Repo Operations (SRP) Take-Up', v: cd(SRF), grp: 'Operations, $ bn' },
-  { k: 'tga', n: 'TGA Closing Balance (Daily)', v: cd(TGA), grp: 'Operations, $ bn' }, { k: 'sofrv', n: 'SOFR Volume', v: cd(SOFRV), grp: 'Operations, $ bn' }
+  { k: 'tga', n: 'TGA Closing Balance (Daily)', v: cd(TGA), grp: 'Operations, $ bn' }, { k: 'dlhead', n: 'Debt Limit Headroom', v: cd(HEAD), grp: 'Operations, $ bn' }, { k: 'sofrv', n: 'SOFR Volume', v: cd(SOFRV), grp: 'Operations, $ bn' }
 ];
 const fmtv = v => Math.abs(v) >= 100 ? fb(v) : Math.abs(v) >= 10 ? v.toFixed(1) : v.toFixed(2);
 const wopt = def => ({ months: WK.slice(0, LW + 1), cat: WCAT, ranges: WR, fmt: fmtv, src: 'Federal Reserve Board H.4.1', W: 460, H: 330, def });
@@ -316,7 +329,7 @@ seriesChart('lt2', wopt({ title: 'Backstop Borrowing: Discount Window and Repo',
     g += `<line class="xh" y1="${ya}" y2="${yb}" stroke="${css('--axis')}" stroke-width=".6" visibility="hidden"/><rect class="hit" x="${x0}" y="${ya}" width="${x1 - x0}" height="${yb - ya}" fill="transparent"/>`;
     plot.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Federal Reserve liabilities and capital, stacked">${g}</svg><div class="tip"></div>`;
     const svg = plot.querySelector('svg'), tip = plot.querySelector('.tip'), xl = plot.querySelector('.xh'), hit = plot.querySelector('.hit');
-    const fv = v => st.u === 'gdp' ? v.toFixed(1) + '%' : fb(v);
+    const fv = v => st.u === 'gdp' ? v.toFixed(2) + '%' : fb(v);
     const move = ev => {
       const r = svg.getBoundingClientRect(), p = ev.touches ? ev.touches[0] : ev, i = Math.max(start, Math.min(N - 1, Math.floor(start + ((p.clientX - r.left) / r.width * W - x0) / xw)));
       xl.setAttribute('x1', X(i)); xl.setAttribute('x2', X(i)); xl.setAttribute('visibility', 'visible');

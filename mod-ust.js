@@ -44,7 +44,7 @@ const SNAP = [['Latest', LD, '--c1', ''], ['1 month ago', onOrBefore(shift(DY[LD
     p += '<p>';
     if (la) {
       const prev = done.filter(a => a.t === la.t && a.k === la.k && a.d < la.d).slice(0, 6), avg = f => prev.length ? prev.reduce((s, a) => s + (a[f] || 0), 0) / prev.length : null;
-      p += `最近標售：${fmtDate(la.d)} ${la.t}${la.k === 'TIPS' ? ' TIPS' : ''}${la.re ? '（增額）' : ''}，投標倍數 ${la.btc.toFixed(2)}（前 6 次平均 ${avg('btc')?.toFixed(2) ?? 'n.a.'}），交易商得標 ${la.pd?.toFixed(1)}%（平均 ${avg('pd')?.toFixed(1) ?? 'n.a.'}%）。`;
+      p += `最近標售：${fmtDate(la.d)} ${la.t}${la.k === 'TIPS' ? ' TIPS' : ''}${la.re ? '（增額）' : ''}，投標倍數 ${la.btc.toFixed(2)}（前 6 次平均 ${avg('btc')?.toFixed(2) ?? 'n.a.'}），交易商得標 ${la.pd?.toFixed(2)}%（平均 ${avg('pd')?.toFixed(2) ?? 'n.a.'}%）。`;
     }
     if (rel) {
       const e = rel.est.map(x => `${x.q.replace('-', ' ')} ${x.v < 0 ? '償還' : '借'} ${fb(Math.abs(x.v) * 10)} 億美元`).join('、');
@@ -141,8 +141,8 @@ const secName = a => `${a.t}${a.k === 'TIPS' ? ' TIPS' : a.k === 'FRN' ? ' FRN' 
     const p = prev6(a), pend = a.btc == null;
     h += `<tr><td>${wlab(a.d)} ${a.d.slice(0, 4)} <b>${secName(a)}</b></td><td class="vl">${a.amt ?? 'n.a.'}</td>` +
       (pend ? `<td colspan="6" class="note">Results not yet in Treasury Fiscal Data</td>` :
-      `<td>${a.y == null ? 'n.a.' : a.k === 'FRN' ? `${(a.y * 100).toFixed(1)} bp margin` : a.y.toFixed(3)}</td><td class="vl"><b>${a.btc.toFixed(2)}</b></td><td>${dlt(a.btc, avg(p, 'btc'), 2, 1) || 'n.a.'}</td>` +
-      `<td class="vl">${a.ind?.toFixed(1) ?? 'n.a.'}</td><td>${a.dir?.toFixed(1) ?? 'n.a.'}</td><td>${a.pd?.toFixed(1) ?? 'n.a.'}${dlt(a.pd, avg(p, 'pd'), 1, -1)}</td>`) + '</tr>';
+      `<td>${a.y == null ? 'n.a.' : a.k === 'FRN' ? `${(a.y * 100).toFixed(1)} bp margin` : a.y.toFixed(2)}</td><td class="vl"><b>${a.btc.toFixed(2)}</b></td><td>${dlt(a.btc, avg(p, 'btc'), 2, 1) || 'n.a.'}</td>` +
+      `<td class="vl">${a.ind?.toFixed(2) ?? 'n.a.'}</td><td>${a.dir?.toFixed(2) ?? 'n.a.'}</td><td>${a.pd?.toFixed(2) ?? 'n.a.'}${dlt(a.pd, avg(p, 'pd'), 2, -1)}</td>`) + '</tr>';
   }
   document.getElementById('ua').innerHTML = h + '</tbody>';
   // schedule ahead: auctions not yet held in the latest refunding's tentative calendar

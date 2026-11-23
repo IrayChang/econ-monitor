@@ -34,9 +34,9 @@ const UI = (()=>{
   const zhS = s => isQ(s) ? `Q${s.slice(6)}` : `${+s.slice(5,7)} 月`;
   const monthOf = s => isQ(s) ? `${s.slice(0,4)}-${String(+s.slice(6)*3).padStart(2,'0')}` : s;
   const dzh = s => s ? `${+s.slice(5,7)}/${+s.slice(8,10)}` : '—';
-  const fx = (v,d=1) => { if(v==null||isNaN(v)) return '—'; const r=+(+v).toFixed(d); return (r===0?0:r).toFixed(d); };
-  const sg = (v,d=1) => v==null||isNaN(v) ? '—' : (v>0?'+':v<0?'−':'') + fx(Math.abs(v),d);
-  const pc = (v,d=1) => v==null||isNaN(v) ? '—' : sg(v,d)+'%';
+  const fx = (v,d=2) => { if(v==null||isNaN(v)) return '—'; const r=+(+v).toFixed(d); return (r===0?0:r).toFixed(d); };
+  const sg = (v,d=2) => v==null||isNaN(v) ? '—' : (v>0?'+':v<0?'−':'') + fx(Math.abs(v),d);
+  const pc = (v,d=2) => v==null||isNaN(v) ? '—' : sg(v,d)+'%';
   const un = (a,n) => { const o=Array(n).fill(null); if(!a) return o; if(Array.isArray(a)) return a.slice(); a.v.forEach((v,i)=>o[a.o+i]=v); return o; };
   const last = a => { for(let t=a.length-1;t>=0;t--) if(a[t]!=null) return t; return -1; };
   const col = v => v==null ? 'var(--dim)' : v>0 ? 'var(--good)' : v<0 ? 'var(--bad)' : 'var(--muted)';
@@ -78,8 +78,8 @@ const UI = (()=>{
       const li=[...T].reverse().find(t=>l.a[t]!=null); if(li!=null&&!l.dash) s+=`<circle cx="${X(T.indexOf(li))}" cy="${Y(l.a[li])}" r="3.2" fill="${l.c}" stroke="var(--panel)" stroke-width="1.2"/>`; });
     if(o.extra) s+=o.extra(X,Y,P,W,H);
     s+=hovEl(P,W,H)+'</svg>'; el.innerHTML=s;
-    hover(el.querySelector('svg'),T,X,i=>{ const t=T[i]; return o.tipT ? o.tipT(t) : tipBox(zh(per[t]),o.title,o.lines.map(l=>[l.n,l.a[t]==null?'—':fx(l.a[t],o.d??1)+(o.unit||''),l.c])); });
-    if(o.legend) o.legend.innerHTML=o.lines.map(l=>{ const lt=[...T].reverse().find(t=>l.a[t]!=null); return `<span><i style="display:inline-block;width:16px;border-top:2.5px ${l.dash?'dashed':'solid'} ${l.c}"></i>${esc(l.n)} <b style="font-family:var(--f-data);font-weight:500">${lt==null?'—':fx(l.a[lt],o.d??1)+(o.unit||'')}</b></span>`; }).join('')+(o.legExtra||'');
+    hover(el.querySelector('svg'),T,X,i=>{ const t=T[i]; return o.tipT ? o.tipT(t) : tipBox(zh(per[t]),o.title,o.lines.map(l=>[l.n,l.a[t]==null?'—':fx(l.a[t],o.d??2)+(o.unit||''),l.c])); });
+    if(o.legend) o.legend.innerHTML=o.lines.map(l=>{ const lt=[...T].reverse().find(t=>l.a[t]!=null); return `<span><i style="display:inline-block;width:16px;border-top:2.5px ${l.dash?'dashed':'solid'} ${l.c}"></i>${esc(l.n)} <b style="font-family:var(--f-data);font-weight:500">${lt==null?'—':fx(l.a[lt],o.d??2)+(o.unit||'')}</b></span>`; }).join('')+(o.legExtra||'');
   }
 
   /* bar chart: stacked (signed) or grouped. o: {P,T,series:[{n,a,c}],stack,total:{n,a,c},W,H,unit,d,title,tipT,ghost:{i,v,c,lab}} */
@@ -100,7 +100,7 @@ const UI = (()=>{
     if(o.ghost){ const gi=T.length, v=o.ghost.v; s+=`<rect x="${(X(gi)-bw/2).toFixed(1)}" y="${Math.min(Y(0),Y(v)).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0.5,Math.abs(Y(v)-Y(0))).toFixed(1)}" fill="none" stroke="${o.ghost.c||'var(--fg)'}" stroke-dasharray="3 3"/><text x="${X(gi)}" y="${Y(Math.max(0,v))-6}" text-anchor="middle" class="axis" style="fill:var(--fg)">${esc(o.ghost.lab)}</text>`; }
     s+=hovEl(P,W,H)+'</svg>'; el.innerHTML=s;
     const T2=o.ghost?T.concat([null]):T;
-    hover(el.querySelector('svg'),T2,X,i=>{ const t=T2[i]; if(t==null) return o.ghost.tip; return o.tipT ? o.tipT(t) : tipBox(zh(per[t]),o.title,S.map(x=>[x.n,x.a[t]==null?'—':sg(x.a[t],o.d??1)+(o.unit||''),x.c]).concat(o.total?[[o.total.n,o.total.a[t]==null?'—':sg(o.total.a[t],o.d??1)+(o.unit||''),o.total.c]]:[])); });
+    hover(el.querySelector('svg'),T2,X,i=>{ const t=T2[i]; if(t==null) return o.ghost.tip; return o.tipT ? o.tipT(t) : tipBox(zh(per[t]),o.title,S.map(x=>[x.n,x.a[t]==null?'—':sg(x.a[t],o.d??2)+(o.unit||''),x.c]).concat(o.total?[[o.total.n,o.total.a[t]==null?'—':sg(o.total.a[t],o.d??2)+(o.unit||''),o.total.c]]:[])); });
   }
 
   /* headline tile; k makes it a button that jumps to a chart */
@@ -164,25 +164,25 @@ const gdpCons = () => { const v=(DS.gdp&&DS.gdp.hist.vint[GQ[last(GS('gdp'))]])|
 const GROUPS = [
   ['act','經濟活動','Activity'],['ms','製造／服務業','Manufacturing & services'],['ds','需求與供給','Demand & supply'],['inf','通膨','Inflation'],['emp','就業','Employment']];
 const IND = [
-  {g:'act',id:'gdp',n:'實質 GDP',src:'gdp',q:1,fast:GS('gdp'),trend:yoyQ(GS('rgdp')),fl:'季增年率',tl:'年增',u:'%',d:1,good:1,thr:0.5,ref:2,refl:'潛在約 2%',cons:gdpCons},
-  {g:'act',id:'core',n:'核心 GDP（民間最終銷售）',src:'gdp',q:1,fast:GS('fspdp'),trend:maQ(GS('fspdp'),4),fl:'季增年率',tl:'4 季平均',u:'%',d:1,good:1,thr:0.5},
-  {g:'act',id:'ctrl',n:'零售控制組（名目）',src:'retail',fast:annA(CTRL,3),trend:yoyA(CTRL),fl:'3M 年化',tl:'年增',u:'%',d:1,good:1,thr:1},
-  {g:'ms',id:'ism_m',n:'ISM 製造業',src:'ism',fast:ismS('m:Manufacturing PMI'),trend:ma(ismS('m:Manufacturing PMI'),6),fl:'當月',tl:'6M 平均',u:'',d:1,good:1,thr:1,ref:50,refl:'50',cons:()=>ismCons('m')},
-  {g:'ms',id:'ism_s',n:'ISM 服務業',src:'ism',fast:ismS('s:Services PMI'),trend:ma(ismS('s:Services PMI'),6),fl:'當月',tl:'6M 平均',u:'',d:1,good:1,thr:1,ref:50,refl:'50',cons:()=>ismCons('s')},
-  {g:'ms',id:'sp_c',n:'S&P 綜合 PMI',src:'spgi',fast:best('cmp'),trend:ma(best('cmp'),6),fl:'當月（含初值）',tl:'6M 平均',u:'',d:1,good:1,thr:1,ref:50,refl:'50',cons:spCons},
-  {g:'ds',id:'no_m',n:'需求：製造業新訂單',src:'ism',fast:ismS('m:New Orders'),trend:ma(ismS('m:New Orders'),6),fl:'當月',tl:'6M 平均',u:'',d:1,good:1,thr:1,ref:50,refl:'50'},
-  {g:'ds',id:'no_s',n:'需求：服務業新訂單',src:'ism',fast:ismS('s:New Orders'),trend:ma(ismS('s:New Orders'),6),fl:'當月',tl:'6M 平均',u:'',d:1,good:1,thr:1,ref:50,refl:'50'},
-  {g:'ds',id:'sd_m',n:'供給：供應商交貨（高＝變慢）',src:'ism',fast:ismS('m:Supplier Deliveries'),trend:ma(ismS('m:Supplier Deliveries'),6),fl:'當月',tl:'6M 平均',u:'',d:1,good:-1,thr:1,ref:50,refl:'50'},
-  {g:'ds',id:'pr_m',n:'供給：製造業物價',src:'ism',fast:ismS('m:Prices'),trend:ma(ismS('m:Prices'),6),fl:'當月',tl:'6M 平均',u:'',d:1,good:-1,thr:1,ref:60,refl:'60 壓力偏高'},
-  {g:'inf',id:'pce',n:'核心 PCE',src:'pce',fast:annA(PCEC,3),trend:yoyA(PCEC),fl:'3M 年化',tl:'年增',u:'%',d:1,good:-1,thr:0.2,ref:2,refl:'目標 2%',target:2},
-  {g:'inf',id:'cpi',n:'核心 CPI',src:'cpi',fast:annA(CPIC,3),trend:yoyA(CPICn),fl:'3M 年化',tl:'年增',u:'%',d:1,good:-1,thr:0.2,ref:2,refl:'2%'},
-  {g:'inf',id:'shl',n:'CPI 住房',src:'cpi',fast:annA(SHL,3),trend:yoyA(SHLn),fl:'3M 年化',tl:'年增',u:'%',d:1,good:-1,thr:0.2},
-  {g:'inf',id:'ppi',n:'核心 PPI（不含食品能源貿易）',src:'ppi',fast:annA(PPIC,3),trend:yoyA(PPICn),fl:'3M 年化',tl:'年增',u:'%',d:1,good:-1,thr:0.2},
-  {g:'emp',id:'ur',n:'失業率',src:'nfp',fast:UR,trend:ma(UR,3),fl:'當月',tl:'3M 平均',u:'%',d:1,good:-1,thr:0.2},
+  {g:'act',id:'gdp',n:'實質 GDP',src:'gdp',q:1,fast:GS('gdp'),trend:yoyQ(GS('rgdp')),fl:'季增年率',tl:'年增',u:'%',d:2,good:1,thr:0.5,ref:2,refl:'潛在約 2%',cons:gdpCons},
+  {g:'act',id:'core',n:'核心 GDP（民間最終銷售）',src:'gdp',q:1,fast:GS('fspdp'),trend:maQ(GS('fspdp'),4),fl:'季增年率',tl:'4 季平均',u:'%',d:2,good:1,thr:0.5},
+  {g:'act',id:'ctrl',n:'零售控制組（名目）',src:'retail',fast:annA(CTRL,3),trend:yoyA(CTRL),fl:'3M 年化',tl:'年增',u:'%',d:2,good:1,thr:1},
+  {g:'ms',id:'ism_m',n:'ISM 製造業',src:'ism',fast:ismS('m:Manufacturing PMI'),trend:ma(ismS('m:Manufacturing PMI'),6),fl:'當月',tl:'6M 平均',u:'',d:2,good:1,thr:1,ref:50,refl:'50',cons:()=>ismCons('m')},
+  {g:'ms',id:'ism_s',n:'ISM 服務業',src:'ism',fast:ismS('s:Services PMI'),trend:ma(ismS('s:Services PMI'),6),fl:'當月',tl:'6M 平均',u:'',d:2,good:1,thr:1,ref:50,refl:'50',cons:()=>ismCons('s')},
+  {g:'ms',id:'sp_c',n:'S&P 綜合 PMI',src:'spgi',fast:best('cmp'),trend:ma(best('cmp'),6),fl:'當月（含初值）',tl:'6M 平均',u:'',d:2,good:1,thr:1,ref:50,refl:'50',cons:spCons},
+  {g:'ds',id:'no_m',n:'需求：製造業新訂單',src:'ism',fast:ismS('m:New Orders'),trend:ma(ismS('m:New Orders'),6),fl:'當月',tl:'6M 平均',u:'',d:2,good:1,thr:1,ref:50,refl:'50'},
+  {g:'ds',id:'no_s',n:'需求：服務業新訂單',src:'ism',fast:ismS('s:New Orders'),trend:ma(ismS('s:New Orders'),6),fl:'當月',tl:'6M 平均',u:'',d:2,good:1,thr:1,ref:50,refl:'50'},
+  {g:'ds',id:'sd_m',n:'供給：供應商交貨（高＝變慢）',src:'ism',fast:ismS('m:Supplier Deliveries'),trend:ma(ismS('m:Supplier Deliveries'),6),fl:'當月',tl:'6M 平均',u:'',d:2,good:-1,thr:1,ref:50,refl:'50'},
+  {g:'ds',id:'pr_m',n:'供給：製造業物價',src:'ism',fast:ismS('m:Prices'),trend:ma(ismS('m:Prices'),6),fl:'當月',tl:'6M 平均',u:'',d:2,good:-1,thr:1,ref:60,refl:'60 壓力偏高'},
+  {g:'inf',id:'pce',n:'核心 PCE',src:'pce',fast:annA(PCEC,3),trend:yoyA(PCEC),fl:'3M 年化',tl:'年增',u:'%',d:2,good:-1,thr:0.2,ref:2,refl:'目標 2%',target:2},
+  {g:'inf',id:'cpi',n:'核心 CPI',src:'cpi',fast:annA(CPIC,3),trend:yoyA(CPICn),fl:'3M 年化',tl:'年增',u:'%',d:2,good:-1,thr:0.2,ref:2,refl:'2%'},
+  {g:'inf',id:'shl',n:'CPI 住房',src:'cpi',fast:annA(SHL,3),trend:yoyA(SHLn),fl:'3M 年化',tl:'年增',u:'%',d:2,good:-1,thr:0.2},
+  {g:'inf',id:'ppi',n:'核心 PPI（不含食品能源貿易）',src:'ppi',fast:annA(PPIC,3),trend:yoyA(PPICn),fl:'3M 年化',tl:'年增',u:'%',d:2,good:-1,thr:0.2},
+  {g:'emp',id:'ur',n:'失業率',src:'nfp',fast:UR,trend:ma(UR,3),fl:'當月',tl:'3M 平均',u:'%',d:2,good:-1,thr:0.2},
   {g:'emp',id:'nfp',n:'非農就業變動',src:'nfp',fast:NFPD,trend:ma(NFPD,6),fl:'當月',tl:'6M 平均',u:'k',d:0,good:1,thr:25,ref:0},
   {g:'emp',id:'icl',n:'初領失業金（月均）',src:'pulse',fast:claimsM,trend:ma(claimsM,6),fl:'月均',tl:'6M 平均',u:'k',d:0,good:-1,thr:10},
-  {g:'emp',id:'ahe',n:'平均時薪年增',src:'nfp',fast:annA(AHE,3),trend:yoyA(AHE),fl:'3M 年化',tl:'年增',u:'%',d:1,good:0,thr:0.2},
-  {g:'emp',id:'epop',n:'壯年就業人口比',src:'nfp',fast:EPOP,trend:ma(EPOP,3),fl:'當月',tl:'3M 平均',u:'%',d:1,good:1,thr:0.2},
+  {g:'emp',id:'ahe',n:'平均時薪年增',src:'nfp',fast:annA(AHE,3),trend:yoyA(AHE),fl:'3M 年化',tl:'年增',u:'%',d:2,good:0,thr:0.2},
+  {g:'emp',id:'epop',n:'壯年就業人口比',src:'nfp',fast:EPOP,trend:ma(EPOP,3),fl:'當月',tl:'3M 平均',u:'%',d:2,good:1,thr:0.2},
 ];
 const PER = ind => ind.q ? GQ : MO;
 
@@ -248,8 +248,8 @@ function renderTbl(){
       const tn=ind.good>0?'good':ind.good<0&&ind.g!=='inf'?'bad':'price', fv=ind.fast[r.tf];
       h+=`<tr data-src="${ind.src}" data-id="${ind.id}"><td class="nm">${esc(ind.n)}</td>${heatTd(`${val(ind,fv)} <span class="zh" style="font-size:10px;color:var(--dim)">${ind.fl}</span>`,heatZ(fv,heatStat(ind.fast,P,r.tf)),tn)}<td>${r.per?lab(r.per):'—'}</td>
         ${heatTd(`${val(ind,tv)} <span style="font-size:10px;color:var(--dim)">${ind.tl}</span>`,heatZ(tv,heatStat(ind.trend,P,r.tt)),tn)}<td style="color:${mc(ind,r.dir)}">${dirLab(r)}</td><td style="color:${mc(ind,r.dir)}">${r.d==null?'—':sg(r.d,ind.d)}</td>
-        <td style="color:${mc(ind,r.turn)}">${turnLab(r)}</td><td style="color:${c==null?'var(--dim)':c>0?'var(--good)':c<0?'var(--bad)':'var(--muted)'}">${c==null?'—':sg(c,1)}</td>
-        <td>${ind.target!=null&&tv!=null?`${sg(tv-ind.target,1)} vs ${ind.target}%`:ind.ref!=null?`${ind.ref}${ind.u==='%'?'%':''}`:'—'}</td><td>${spark(ind)}</td><td>${nx?dzh(nx.d):'—'}</td></tr>`; }); });
+        <td style="color:${mc(ind,r.turn)}">${turnLab(r)}</td><td style="color:${c==null?'var(--dim)':c>0?'var(--good)':c<0?'var(--bad)':'var(--muted)'}">${c==null?'—':sg(c,2)}</td>
+        <td>${ind.target!=null&&tv!=null?`${sg(tv-ind.target,2)} vs ${ind.target}%`:ind.ref!=null?`${ind.ref}${ind.u==='%'?'%':''}`:'—'}</td><td>${spark(ind)}</td><td>${nx?dzh(nx.d):'—'}</td></tr>`; }); });
   $('#oTbl').innerHTML=h+'</tbody>';
   $('#oLg').innerHTML=heatLegend('good','「最新」與「趨勢線」欄位上色：綠＝對景氣有利、赭紅＝不利；通膨與時薪改用藍（低）與赭紅（高）。顏色深淺＝與該指標 2016–2019 年（疫情前）的平均相比，差距以平常的波動幅度衡量（約 2.5 倍時為滿色）。');
   $('#oTbl').querySelectorAll('tr[data-src]').forEach(r=>{ r.style.cursor='pointer'; r.onclick=()=>{ location.hash=r.dataset.src; }; });
@@ -284,7 +284,7 @@ function renderSum(){
     const turns=L.filter(x=>x.r.turn&&x.r.turn!==x.r.dir&&x.r.dir!=null).map(({ind,r})=>`${ind.n.replace(/（.*）/,'')}最新一期${r.turn>0?'高於':'低於'}趨勢`);
     o.push(`<b>${z}：</b>${up} 項上升、${dn} 項下降、${fl} 項持平。${parts.join('；')}。${turns.length?`<span style="color:var(--cmd)">留意轉折：${turns.join('、')}。</span>`:''}`); });
   const inf=read(IND.find(i=>i.id==='pce')), ur=read(IND.find(i=>i.id==='ur'));
-  o.push(`<b>雙重使命一覽：</b>核心 PCE 趨勢 ${fx(IND.find(i=>i.id==='pce').trend[inf.tt])}%（距 2% 目標 ${sg(IND.find(i=>i.id==='pce').trend[inf.tt]-2,1)} 個百分點，${inf.dir>0?'仍在遠離':inf.dir<0?'正在接近':'沒有明顯變化'}）；失業率趨勢 ${fx(IND.find(i=>i.id==='ur').trend[ur.tt])}%（${ur.dir>0?'上升':ur.dir<0?'下降':'持平'}）。本頁只描述方向，不是預測或投資建議。`);
+  o.push(`<b>雙重使命一覽：</b>核心 PCE 趨勢 ${fx(IND.find(i=>i.id==='pce').trend[inf.tt])}%（距 2% 目標 ${sg(IND.find(i=>i.id==='pce').trend[inf.tt]-2,2)} 個百分點，${inf.dir>0?'仍在遠離':inf.dir<0?'正在接近':'沒有明顯變化'}）；失業率趨勢 ${fx(IND.find(i=>i.id==='ur').trend[ur.tt])}%（${ur.dir>0?'上升':ur.dir<0?'下降':'持平'}）。本頁只描述方向，不是預測或投資建議。`);
   $('#oSumList').innerHTML=o.map(s=>`<li>${s}</li>`).join('');
 }
 
@@ -330,9 +330,9 @@ function renderInfl(){
   $('#oInR').querySelectorAll('button').forEach(b=>b.onclick=()=>{ inState.r=b.dataset.r; renderInfl(); });
   $('#oInV').querySelectorAll('button').forEach(b=>{ b.setAttribute('aria-pressed',b.dataset.v===inState.v); b.onclick=()=>{ inState.v=b.dataset.v; renderInfl(); }; });
   $('#oInC').hidden=inState.v!=='c'; $('#oInTb').hidden=inState.v!=='t';
-  lineChart($('#oInC'),{P:MO,T,W:760,H:300,title:'通膨年增率',d:1,unit:'%',lines:INFL,refs:[{v:2,c:'var(--cmd)',lab:'目標 2%'}],legend:$('#oInL')});
+  lineChart($('#oInC'),{P:MO,T,W:760,H:300,title:'通膨年增率',d:2,unit:'%',lines:INFL,refs:[{v:2,c:'var(--cmd)',lab:'目標 2%'}],legend:$('#oInL')});
   const rows=T.slice(-Math.min(T.length,24)).reverse();
-  $('#oInTb').innerHTML=`<table><thead><tr><th>月份</th>${INFL.map(l=>`<th>${l.n}</th>`).join('')}</tr></thead><tbody>${rows.map(t=>`<tr><td class="nm">${lab(MO[t])}</td>${INFL.map(l=>`<td>${l.a[t]==null?'—':fx(l.a[t],1)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  $('#oInTb').innerHTML=`<table><thead><tr><th>月份</th>${INFL.map(l=>`<th>${l.n}</th>`).join('')}</tr></thead><tbody>${rows.map(t=>`<tr><td class="nm">${lab(MO[t])}</td>${INFL.map(l=>`<td>${l.a[t]==null?'—':fx(l.a[t],2)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
 }
 
 function renderToolbar(){

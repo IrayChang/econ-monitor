@@ -18,7 +18,7 @@ const SECT = { m: 'Manufacturing', s: 'Services' };
 // 'up is bad' components: higher prices, and customers' inventories (too high = weaker future orders)
 const INV = new Set(['Prices', "Customers' Inventories"]);
 const iv = (sec, c) => IS(`${sec}:${c}`);
-const sgn = v => v == null ? '' : (v > 0 ? '+' : '') + v.toFixed(1);
+const sgn = v => v == null ? '' : (v > 0 ? '+' : '') + v.toFixed(2);
 const avgN = (a, t, n) => { const xs = a.slice(Math.max(0, t - n + 1), t + 1).filter(v => v != null); return xs.length === n ? xs.reduce((p, c) => p + c, 0) / n : null; };
 const state50 = (v, c) => v == null ? '' : c === 'Prices' ? (v > 50 ? '上漲' : '下跌') : c === 'Supplier Deliveries' ? (v > 50 ? '變慢' : '變快') : c.includes('Inventor') && c !== 'Inventory Sentiment' ? (v > 50 ? '增加' : '減少') : (v > 50 ? '擴張' : '收縮');
 const tone = (v, c) => v == null ? '' : ((v > 50) !== INV.has(c)) ? 'var(--c3)' : 'var(--c2)';
@@ -69,7 +69,7 @@ if (DK === 'ism') {
       h += `<tr><td><button type="button" class="nm" data-s="${hsec}:${esc(c)}">${esc(c)}</button></td>` + cols.map(t => {
         const v = a[t]; if (v == null) return '<td class="hx"></td>';
         const d = Math.min(1, Math.abs(v - 50) / 12), good = (v > 50) !== INV.has(c);
-        return `<td class="hx" style="background:color-mix(in srgb, var(${good ? '--c3' : '--c2'}) ${Math.round(d * 70)}%, var(--paper))" title="${esc(c)} · ${plab(AX[t])}: ${v.toFixed(1)}">${v.toFixed(0)}</td>`;
+        return `<td class="hx" style="background:color-mix(in srgb, var(${good ? '--c3' : '--c2'}) ${Math.round(d * 70)}%, var(--paper))" title="${esc(c)} · ${plab(AX[t])}: ${v.toFixed(2)}">${v.toFixed(0)}</td>`;
       }).join('') + '</tr>';
     }
     document.getElementById('sheat').innerHTML = h + '</tbody>';
@@ -86,7 +86,7 @@ if (DK === 'ism') {
   CAT.push({ k: 'no-inv', n: 'ISM Mfg: New Orders less Inventories', v: spread, grp: 'Derived' });
   for (const s of ['mfg', 'svc', 'cmp']) CAT.push({ k: `sp:${s}`, n: `S&P Global ${{ mfg: 'Manufacturing', svc: 'Services', cmp: 'Composite' }[s]} PMI`, v: SP(`${s}:final`), grp: 'S&P Global' });
   const CT = CAT.map(c => ({ ...c, v: c.v.slice(0, L_ + 1) })), AXL = AX.slice(0, L_ + 1);
-  const opt = (def, W = 460, H = 330) => ({ months: AXL, cat: CT, ranges: RANGES, fmt: v => v.toFixed(1), src: K.src, W, H, def });
+  const opt = (def, W = 460, H = 330) => ({ months: AXL, cat: CT, ranges: RANGES, fmt: v => v.toFixed(2), src: K.src, W, H, def });
   seriesChart('sch5', opt({ title: 'ISM Manufacturing: New Orders', sub: 'Diffusion Index, SA, 50+ = Expansion', r: '5Y', ref: 50, ids: [{ k: 'm:New Orders' }] }, 900, 360));
   document.getElementById('survey').addEventListener('click', ev => { const b = ev.target.closest('button[data-s]'); if (!b) return; SC.sch5.set([{ k: b.dataset.s, ax: 'L' }]); document.getElementById('sch5').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); });
   seriesChart('sch1', opt({ title: 'ISM Purchasing Managers Indexes', sub: 'Diffusion Index, SA, 50+ = Expansion', r: 'Max', ref: 50, ids: [{ k: 'm:Manufacturing PMI' }, { k: 's:Services PMI' }] }));
@@ -122,7 +122,7 @@ if (DK === 'ism') {
   for (const [s, n] of SEC) CAT.push({ k: `sp:${s}`, n: `S&P ${n} PMI, final`, v: fi(s), grp: 'S&P Global, final' }, { k: `spf:${s}`, n: `S&P ${n} PMI, flash`, v: fl(s), grp: 'S&P Global, flash' }, { k: `spc:${s}`, n: `S&P ${n} PMI, flash consensus`, v: flc(s), grp: 'Consensus' });
   CAT.push({ k: 'm:Manufacturing PMI', n: 'ISM Manufacturing PMI', v: ism.mfg, grp: 'ISM' }, { k: 's:Services PMI', n: 'ISM Services PMI', v: ism.svc, grp: 'ISM' });
   const CT = CAT.map(c => ({ ...c, v: c.v.slice(0, Lf + 1) })), AXL = AX.slice(0, Lf + 1);
-  const opt = (def, W = 460, H = 330) => ({ months: AXL, cat: CT, ranges: RANGES, fmt: v => v.toFixed(1), src: K.src, W, H, def });
+  const opt = (def, W = 460, H = 330) => ({ months: AXL, cat: CT, ranges: RANGES, fmt: v => v.toFixed(2), src: K.src, W, H, def });
   seriesChart('sch5', opt({ title: 'S&P Global US Composite PMI', sub: 'Diffusion Index, SA, 50+ = Expansion', r: '3Y', ref: 50, ids: [{ k: 'sp:cmp' }, { k: 'spf:cmp' }] }, 900, 360));
   document.getElementById('survey').addEventListener('click', ev => { const b = ev.target.closest('button[data-s]'); if (!b) return; SC.sch5.set([{ k: b.dataset.s, ax: 'L' }, { k: b.dataset.s.replace('sp:', 'spf:'), ax: 'L' }]); document.getElementById('sch5').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); });
   seriesChart('sch1', opt({ title: 'Manufacturing: S&P Global vs. ISM', sub: 'Diffusion Index, SA, 50+ = Expansion', r: 'Max', ref: 50, ids: [{ k: 'sp:mfg' }, { k: 'm:Manufacturing PMI' }] }));
