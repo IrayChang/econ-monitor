@@ -239,7 +239,7 @@ document.addEventListener('mousedown', ev => { for (const k in CH) if (!CH[k].el
 const lm = M[L], A = K.top, C = K.core;
 const mA = MM(A)[L], mC = MM(C)[L], yA = Y(A)[L], yC = Y(C)[L];
 const HD = document.getElementById('hd');
-const verb = (v, p) => v > p + 0.05 ? '加速至' : v < p - 0.05 ? '放緩至' : '持平於';
+const verb = (v, p) => f1(v) === f1(p) ? '持平於' : v > p ? '加速至' : '放緩至';   // compared as displayed
 const chg = v => v == null ? '資料缺' : Math.abs(v) < 0.05 ? '持平' : (v > 0 ? '上漲 ' : '下跌 ') + f1(Math.abs(v)) + '%';
 const E = K.energy, F = K.food, SV = K.svc, GD = K.goods, SH = K.ex;
 // PPI items BEA uses in place of CPI when it builds PCE prices (the reason markets read PPI); portfolio management follows stock prices
