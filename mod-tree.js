@@ -298,8 +298,17 @@ const trendY = (v, p) => v == null || p == null ? null : Math.abs(v - p) < 0.3 ?
 // a year-ago index can be missing (no official index that month), so the 12-month change is n.a. and comparisons on it are dropped
 const yz = v => v == null ? '年增率無法計算' : `年增 ${f1(v)}%`;
 const yGap = yA == null ? `（${mzh(M[L - 12])}無官方指數）` : '';
+// heating or cooling is said only when the 3-month pace agrees and the 12-month trend does not point the other way
+function pace(a3, a6, y, tr) {
+  if (a3 == null || a6 == null) return '';
+  const side = a => a > y + 0.2 ? 1 : a < y - 0.2 ? -1 : 0, s3 = side(a3), s6 = side(a6);
+  const near = s3 === s6 ? '' : s3 > 0 ? '，但近 3 個月快於過去一年' : s3 < 0 ? '，但近 3 個月慢於過去一年' : '，近 3 個月則與過去一年相近';
+  return s6 > 0 ? '，近半年的速度快於過去一年' + (s3 > 0 && tr !== '走低' ? '，通膨有再升溫跡象' : near)
+    : s6 < 0 ? '，近半年的速度慢於過去一年' + (s3 < 0 && tr !== '走高' ? '，通膨持續降溫' : near)
+    : '，近半年的速度與過去一年相近' + near;
+}
 if (KIND === 'price') document.getElementById('p1').innerHTML = `
-<p>美國 ${mzh(lm)}${K.zh}季調後${chg(mA)}，前月為 ${f1(MM(A)[L - 1])}%，再前月為 ${f1(MM(A)[L - 2])}%。${yA == null ? `年增率無法計算${yGap}，前月為 ${f1(Y(A)[L - 1])}%` : `年增率由 ${f1(Y(A)[L - 1])}% ${yA > Y(A)[L - 1] ? '升至' : yA < Y(A)[L - 1] ? '降至' : '持平於'} ${f1(yA)}%`}${K.ref ? '，聯準會目標為 2%' : ''}。${K.coreZh}${chg(mC)}，${yz(yC)}；核心 3 個月年化 ${f1(ann(IDX[C], 3))}%、6 個月年化 ${f1(ann(IDX[C], 6))}%（前月 6 個月年化 ${f1(val(IDX[C], 'ann6').v[L - 1])}%）${yC == null ? '。' : `，${ann(IDX[C], 6) > yC + 0.2 ? '近半年的速度快於過去一年，通膨有再升溫跡象' : ann(IDX[C], 6) < yC - 0.2 ? '近半年的速度慢於過去一年，通膨持續降溫' : '近半年的速度與過去一年相近'}`}${trendY(yC, Y(C)[L - 12]) ? `；核心年增率在過去一年大致${trendY(yC, Y(C)[L - 12])}` : ''}${yA == null || yC == null ? '' : DK === 'ppi' ? `，總體${yC < yA ? '高於' : '低於'}核心，差距來自能源（${yz(Y(E)[L])}）、食品（${yz(Y(F)[L])}）與貿易服務（${yz(Y(SH)[L])}）。` : yC < yA ? '，總體高於核心，差距主要來自能源與食品。' : '，總體低於核心，能源與食品壓低了總體。'}</p>
+<p>美國 ${mzh(lm)}${K.zh}季調後${chg(mA)}，前月為 ${f1(MM(A)[L - 1])}%，再前月為 ${f1(MM(A)[L - 2])}%。${yA == null ? `年增率無法計算${yGap}，前月為 ${f1(Y(A)[L - 1])}%` : `年增率由 ${f1(Y(A)[L - 1])}% ${yA > Y(A)[L - 1] ? '升至' : yA < Y(A)[L - 1] ? '降至' : '持平於'} ${f1(yA)}%`}${K.ref ? '，聯準會目標為 2%' : ''}。${K.coreZh}${chg(mC)}，${yz(yC)}；核心 3 個月年化 ${f1(ann(IDX[C], 3))}%、6 個月年化 ${f1(ann(IDX[C], 6))}%（前月 6 個月年化 ${f1(val(IDX[C], 'ann6').v[L - 1])}%）${yC == null ? '。' : pace(ann(IDX[C], 3), ann(IDX[C], 6), yC, trendY(yC, Y(C)[L - 12]))}${trendY(yC, Y(C)[L - 12]) ? `；核心年增率在過去一年大致${trendY(yC, Y(C)[L - 12])}` : ''}${yA == null || yC == null ? '' : DK === 'ppi' ? `，總體${yC < yA ? '高於' : '低於'}核心，差距來自能源（${yz(Y(E)[L])}）、食品（${yz(Y(F)[L])}）與貿易服務（${yz(Y(SH)[L])}）。` : yC < yA ? '，總體高於核心，差距主要來自能源與食品。' : '，總體低於核心，能源與食品壓低了總體。'}</p>
 <p>能源價格${chg(MM(E)[L])}，${yz(Y(E)[L])}。食品價格${chg(MM(F)[L])}，${yz(Y(F)[L])}。</p>`;
 const pm = v => v == null ? 'n.a.' : Math.abs(v) < 0.005 ? '0.00%' : (v > 0 ? '+' : '−') + Math.abs(v).toFixed(2) + '%';
 if (DK === 'ppi') document.getElementById('p2').innerHTML = `
